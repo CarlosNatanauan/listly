@@ -34,9 +34,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (user != null) {
       ref.read(userProvider.notifier).state = user; // Update user provider
+
+      // Create a welcome message using the username from the user object
+      String welcomeMessage = 'Welcome back, ${user.username}!';
+
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-            builder: (context) => MainPage()), // Navigate to MainPage
+          builder: (context) => MainPage(
+              welcomeMessage: welcomeMessage), // Pass the welcome message
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

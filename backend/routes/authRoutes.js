@@ -38,7 +38,7 @@ router.post('/login', async (req, res) => {
   if (!isValidPassword) return res.status(400).json({ message: 'Invalid credentials' });
 
   const token = jwt.sign({ id: user._id }, JWT_SECRET);
-  res.json({ token, userId: user._id });
+  res.json({ token, userId: user._id, username: user.username }); // Include the username
 });
 
 // Get User Data

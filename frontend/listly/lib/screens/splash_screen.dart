@@ -15,13 +15,17 @@ class SplashScreen extends ConsumerWidget {
 
   Future<void> _checkLoginStatus(WidgetRef ref, BuildContext context) async {
     final authService = ref.read(authServiceProvider);
+    await authService.loadUserFromPrefs(); // Load user from prefs
     final token = await authService.getToken();
 
     if (token != null) {
       // Set the current user in the userProvider if token is found
       ref.read(userProvider.notifier).state = authService.currentUser;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => MainPage()),
+        MaterialPageRoute(
+            builder: (context) => MainPage(
+                welcomeMessage:
+                    'Welcome back, ${authService.currentUser?.username}!')),
       );
     } else {
       Navigator.of(context).pushReplacement(

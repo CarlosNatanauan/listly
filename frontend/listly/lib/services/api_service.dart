@@ -16,6 +16,7 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
+      // Parse and return the response data
       return jsonDecode(response.body);
     } else {
       // Log the error response for debugging
