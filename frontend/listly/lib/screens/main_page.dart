@@ -12,9 +12,15 @@ class MainPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Main Page'),
+        automaticallyImplyLeading: false, // This removes the back button
       ),
       body: Center(
-        child: Text(welcomeMessage),
+        child: Text(
+          welcomeMessage,
+          style: TextStyle(
+              fontSize:
+                  24), // Optional: Increase font size for better visibility
+        ),
       ),
     );
   }
