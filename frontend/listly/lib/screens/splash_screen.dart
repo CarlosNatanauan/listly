@@ -26,8 +26,7 @@ class SplashScreen extends ConsumerWidget {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => MainPage(
-            welcomeMessage:
-                'Welcome back, ${authService.currentUser?.username}!',
+            welcomeMessage: 'Hello, ${authService.currentUser?.username}!',
           ),
         ),
       );

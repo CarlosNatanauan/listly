@@ -54,13 +54,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        elevation: 0, // Remove the AppBar shadow if desired
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop(); // Navigate back to the RegisterScreen
+            Navigator.of(context).pop(); // Navigate back to the previous screen
           },
         ),
+        title: null, // Remove the title from the AppBar
       ),
       body: GestureDetector(
         onTap: () {
