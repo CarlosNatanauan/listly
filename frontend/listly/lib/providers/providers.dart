@@ -1,3 +1,4 @@
+//providers.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart'; // Adjust the path based on your folder structure
 import '../models/user.dart'; // Adjust the path based on your folder structure
