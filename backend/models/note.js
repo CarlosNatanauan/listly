@@ -1,4 +1,4 @@
-// models/Note.js
+// models/note.js
 const mongoose = require('mongoose');
 
 const noteSchema = new mongoose.Schema({
