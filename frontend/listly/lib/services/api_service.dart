@@ -63,13 +63,14 @@ class ApiService {
 
   static Future<void> updateTask(ToDo task, String token) async {
     final response = await http.put(
-      Uri.parse('$_baseUrl/tasks/${task.id}'),
+      Uri.parse('$_baseUrl/tasks/${task.id}'), // Include task ID in the URL
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token', // Include authorization token
       },
       body: jsonEncode({
-        'completed': task.completed,
+        'task': task.task, // Send updated task text
+        'completed': task.completed, // Send completion status
       }),
     );
 

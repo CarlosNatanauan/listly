@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/auth_service.dart'; // Adjust the path based on your folder structure
-import '../models/user.dart'; // Adjust the path based on your folder structure
-import '../models/todo.dart'; // Import the ToDo model
+import '../services/auth_service.dart';
+import '../models/user.dart';
+import '../models/todo.dart';
 
 // Provide a singleton instance of AuthService
 final authServiceProvider = Provider<AuthService>((ref) {
@@ -45,3 +45,6 @@ class TaskNotifier extends StateNotifier<List<ToDo>> {
 final tasksProvider = StateNotifierProvider<TaskNotifier, List<ToDo>>((ref) {
   return TaskNotifier();
 });
+
+// Provider for the visibility state of the AddToDoWidget
+final addToDoWidgetVisibilityProvider = StateProvider<bool>((ref) => false);
