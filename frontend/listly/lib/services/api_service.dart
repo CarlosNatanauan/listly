@@ -80,4 +80,38 @@ class ApiService {
       throw Exception('Failed to update task: ${response.body}');
     }
   }
+
+  static Future<String> addTask(String task, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/tasks'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'task': task,
+        'completed': false,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return response.body; // Return the raw JSON body as a string
+    } else {
+      throw Exception('Failed to add task');
+    }
+  }
+
+  static Future<void> deleteTask(String taskId, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/tasks/$taskId'),
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete task: ${response.body}');
+    }
+  }
 }
