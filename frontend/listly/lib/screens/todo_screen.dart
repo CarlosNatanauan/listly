@@ -99,6 +99,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       child: Card(
+        color: Colors.white,
         elevation: 1,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
@@ -201,7 +202,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
           await _deleteTask(task);
         },
         child: Card(
-          elevation: 2,
+          color: Colors.white,
+          elevation: 1,
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
