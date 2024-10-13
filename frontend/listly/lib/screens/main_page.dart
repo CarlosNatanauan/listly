@@ -10,6 +10,7 @@ import '../providers/providers.dart';
 import '../../models/todo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert'; // For jsonDecode
+import '../providers/fab_visibility_provider.dart'; // Import the FAB visibility provider
 
 class MainPage extends ConsumerStatefulWidget {
   final String welcomeMessage;
@@ -21,10 +22,9 @@ class MainPage extends ConsumerStatefulWidget {
 }
 
 class _MainPageState extends ConsumerState<MainPage> {
-  int _selectedIndex = 0; // Initial tab index
+  int _selectedIndex = 0;
   final double _bottomNavBarHeight = 55.0;
-  final double _fabMargin = 40.0;
-  bool _isAddToDoVisible = false; // Tracks visibility of AddToDoWidget
+  bool _isAddToDoVisible = false;
   TextEditingController _toDoTextController = TextEditingController();
 
   @override
@@ -42,7 +42,6 @@ class _MainPageState extends ConsumerState<MainPage> {
         final List<dynamic> response = await ApiService.fetchTasks(token);
 
         if (response is List) {
-          // Update the tasks in the provider
           ref.read(tasksProvider.notifier).setTasks(
                 response.map((taskJson) => ToDo.fromJson(taskJson)).toList(),
               );
@@ -50,15 +49,10 @@ class _MainPageState extends ConsumerState<MainPage> {
           throw Exception('Invalid response format');
         }
       } catch (error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching tasks: ${error.toString()}')),
-        );
+        _showErrorSnackBar('Error fetching tasks: $error');
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('No authentication token found. Please log in.')),
-      );
+      _showErrorSnackBar('No authentication token found. Please log in.');
     }
   }
 
@@ -75,60 +69,46 @@ class _MainPageState extends ConsumerState<MainPage> {
       final token = await authService.getToken();
 
       if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('No authentication token found. Please log in.')),
-        );
+        _showErrorSnackBar('No authentication token found. Please log in.');
         return;
       }
 
       try {
-        // Send the new task to the backend and get the response
         final response = await ApiService.addTask(newToDo, token);
-
-        // Parse the JSON response and convert it into a ToDo object
         final Map<String, dynamic> jsonResponse = jsonDecode(response);
         final ToDo newTask = ToDo.fromJson(jsonResponse);
 
-        // If the task was added successfully, update the provider
-        ref
-            .read(tasksProvider.notifier)
-            .addTask(newTask); // Update the provider with the new task
-        _toDoTextController.clear(); // Clear the input field
-        _isAddToDoVisible = false; // Hide the widget after saving
-
-        // Show success message
-        /*
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('New task added successfully')),
-        );
-        */
+        ref.read(tasksProvider.notifier).addTask(newTask);
+        _toDoTextController.clear();
+        _isAddToDoVisible = false;
       } catch (error) {
-        // Handle any errors when adding the task
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error adding task: $error')),
-        );
+        _showErrorSnackBar('Error adding task: $error');
       }
     }
   }
 
-  // Handle the action for the floating action button
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   void _handleFABPress() {
     if (_selectedIndex == 0) {
-      // If Notes tab is selected, navigate to AddNotesWidget
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => AddNotesWidget()),
       );
     } else if (_selectedIndex == 1) {
-      // If To-do tab is selected, show AddToDoWidget
       _toggleAddToDoWidget();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final tasks = ref.watch(tasksProvider); // Watch the tasks from the provider
+    final tasks = ref.watch(tasksProvider);
+    final isFABVisible =
+        ref.watch(fabVisibilityProvider); // Listen to FAB visibility
 
     return WillPopScope(
       onWillPop: () async {
@@ -159,14 +139,11 @@ class _MainPageState extends ConsumerState<MainPage> {
         ),
         body: Stack(
           children: [
-            // Display the current tab content
             _selectedIndex == 1
                 ? tasks.isEmpty
                     ? Center(child: Text('No tasks available'))
-                    : TodoScreen() // Pass the tasks from the provider
+                    : TodoScreen()
                 : NotesScreen(),
-
-            // Show AddToDoWidget if it's visible
             if (_isAddToDoVisible)
               AddToDoWidget(
                 onClose: _toggleAddToDoWidget,
@@ -175,20 +152,14 @@ class _MainPageState extends ConsumerState<MainPage> {
               ),
           ],
         ),
-
-        // Conditionally show the FAB when AddToDoWidget is not visible
-        floatingActionButton: !_isAddToDoVisible
+        floatingActionButton: (!_isAddToDoVisible && isFABVisible)
             ? FloatingActionButton(
                 onPressed: _handleFABPress,
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                ),
+                child: Icon(Icons.add, color: Colors.white),
                 backgroundColor: Color(0xFFFF725E),
                 elevation: 5,
               )
-            : null,
-
+            : null, // Hide FAB when edit or add widget is visible
         bottomNavigationBar: FlashyTabBar(
           height: _bottomNavBarHeight,
           selectedIndex: _selectedIndex,
@@ -197,8 +168,7 @@ class _MainPageState extends ConsumerState<MainPage> {
             setState(() {
               _selectedIndex = index;
               if (index != 1) {
-                _isAddToDoVisible =
-                    false; // Hide AddToDoWidget if not in To-do tab
+                _isAddToDoVisible = false;
               }
             });
           },
