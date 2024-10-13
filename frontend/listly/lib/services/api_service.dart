@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../models/todo.dart'; // Import your ToDo model
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.0.111:5000'; // Backend API URL
@@ -40,6 +41,77 @@ class ApiService {
       throw Exception(error['message']);
     } else {
       throw Exception('Failed to register');
+    }
+  }
+
+  static Future<List<dynamic>> fetchTasks(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/tasks'), // Adjust to your backend URL
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      return jsonResponse; // Return the raw JSON response
+    } else {
+      throw Exception('Failed to load tasks');
+    }
+  }
+
+  static Future<void> updateTask(ToDo task, String token) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/tasks/${task.id}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Include authorization token
+      },
+      body: jsonEncode({
+        'completed': task.completed,
+      }),
+    );
+
+    print('Update response status: ${response.statusCode}'); // Log status
+    print('Update response body: ${response.body}'); // Log body
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update task: ${response.body}');
+    }
+  }
+
+  static Future<String> addTask(String task, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/tasks'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'task': task,
+        'completed': false,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return response.body; // Return the raw JSON body as a string
+    } else {
+      throw Exception('Failed to add task');
+    }
+  }
+
+  static Future<void> deleteTask(String taskId, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/tasks/$taskId'),
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete task: ${response.body}');
     }
   }
 }
