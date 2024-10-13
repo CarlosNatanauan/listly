@@ -31,7 +31,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
             padding: const EdgeInsets.all(8.0),
             child: Text(
               'Not Completed',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
             ),
           ),
           ...notCompletedTasks.map((task) => _buildTaskCard(context, task)),
@@ -52,7 +52,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 children: [
                   Text(
                     'Completed',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
                   ),
                   Icon(
                     _showCompletedTasks
