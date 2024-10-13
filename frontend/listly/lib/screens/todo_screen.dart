@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/todo.dart';
 import '../services/api_service.dart';
@@ -38,6 +39,21 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
     return Column(
       children: [
+        // Title for the To-do screen
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 4.0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'To-do',
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
         _buildSearchBar(),
         Expanded(
           child: Stack(
@@ -46,7 +62,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 children: [
                   if (notCompletedTasks.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
                       child:
                           Text('Not Completed', style: TextStyle(fontSize: 16)),
                     ),
@@ -55,7 +71,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   ],
                   if (completedTasks.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
                       child: InkWell(
                         onTap: () {
                           setState(() {
@@ -228,10 +244,10 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   child: Text(
                     task.task,
                     style: TextStyle(
-                      fontSize: 16,
-                      decoration:
-                          task.completed ? TextDecoration.lineThrough : null,
-                    ),
+                        fontSize: 16,
+                        decoration:
+                            task.completed ? TextDecoration.lineThrough : null,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ],

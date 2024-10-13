@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/todo.dart'; // Import your ToDo model
+import '../models/note.dart'; // Import your ToDo model
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.0.111:5000'; // Backend API URL
@@ -113,6 +114,24 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete task: ${response.body}');
+    }
+  }
+
+  //Notes
+  static Future<List<Note>> fetchNotes(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/notes'), // Adjust to your backend URL
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      return jsonResponse.map((note) => Note.fromJson(note)).toList();
+    } else {
+      throw Exception('Failed to load notes');
     }
   }
 }

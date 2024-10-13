@@ -27,6 +27,8 @@ class _MainPageState extends ConsumerState<MainPage> {
   bool _isAddToDoVisible = false;
   TextEditingController _toDoTextController = TextEditingController();
 
+  String? _token; // Variable to store the token
+
   @override
   void initState() {
     super.initState();
@@ -35,11 +37,12 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   Future<void> _fetchTasks() async {
     final authService = ref.read(authServiceProvider);
-    final token = await authService.getToken();
+    _token = await authService.getToken(); // Fetch and store the token
 
-    if (token != null) {
+    if (_token != null) {
       try {
-        final List<dynamic> response = await ApiService.fetchTasks(token);
+        final List<dynamic> response =
+            await ApiService.fetchTasks(_token!); // Use the stored token
 
         if (response is List) {
           ref.read(tasksProvider.notifier).setTasks(
@@ -66,7 +69,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     String newToDo = _toDoTextController.text.trim();
     if (newToDo.isNotEmpty) {
       final authService = ref.read(authServiceProvider);
-      final token = await authService.getToken();
+      String? token = await authService.getToken();
 
       if (token == null) {
         _showErrorSnackBar('No authentication token found. Please log in.');
@@ -97,7 +100,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     if (_selectedIndex == 0) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => AddNotesWidget()),
+        MaterialPageRoute(builder: (context) => AddNoteWidget()),
       );
     } else if (_selectedIndex == 1) {
       _toggleAddToDoWidget();
@@ -143,7 +146,10 @@ class _MainPageState extends ConsumerState<MainPage> {
                 ? tasks.isEmpty
                     ? Center(child: Text('No tasks available'))
                     : TodoScreen()
-                : NotesScreen(),
+                : _token != null
+                    ? NotesScreen(token: _token!) // Use the stored token
+                    : Center(
+                        child: Text('Token is not available. Please log in.')),
             if (_isAddToDoVisible)
               AddToDoWidget(
                 onClose: _toggleAddToDoWidget,
