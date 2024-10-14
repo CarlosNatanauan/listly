@@ -1,7 +1,9 @@
-// routes/noteRoutes.js
 const express = require('express');
 const Note = require('../models/note');
 const authenticateJWT = require('../middleware/authMiddleware');
+
+// Import the WebSocket server (you might need to export it from wsServer.js)
+const { wss } = require('../wsServer'); // Assuming you modify wsServer.js to export wss
 
 const router = express.Router();
 
@@ -19,6 +21,14 @@ router.post('/', async (req, res) => {
   try {
     const savedNote = await newNote.save();
     res.status(201).json(savedNote); // Return the saved note
+
+    // Broadcast the new note to all connected WebSocket clients
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ action: 'create', note: savedNote }));
+      }
+    });
+
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -56,6 +66,13 @@ router.put('/:id', async (req, res) => {
 
     if (!updatedNote) return res.status(404).json({ message: 'Note not found' });
     res.json(updatedNote);
+
+    // Broadcast the updated note to all connected WebSocket clients
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ action: 'update', note: updatedNote }));
+      }
+    });
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -66,7 +83,15 @@ router.delete('/:id', async (req, res) => {
   try {
     const deletedNote = await Note.findOneAndDelete({ _id: req.params.id, userId: req.user.id }); // Ensure only the owner can delete
     if (!deletedNote) return res.status(404).json({ message: 'Note not found' });
+    
     res.json({ message: 'Note deleted' });
+
+    // Broadcast the deleted note ID to all connected WebSocket clients
+    wss.clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ action: 'delete', id: req.params.id }));
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const createWebSocketServer = require('./wsServer'); // Import the WebSocket server function
 
 const app = express(); // Initialize the Express app here
 const PORT = process.env.PORT || 5000;
@@ -34,9 +35,11 @@ app.get('/', (req, res) => {
   res.send('Notepad-ToDo API is running');
 });
 
-// Start server
+// Start the Express server
 const HOST = '192.168.0.111'; // Specify your IP address here
-app.listen(PORT, HOST, () => {
+const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);
 });
 
+// Initialize the WebSocket server
+const wss = createWebSocketServer(server);
