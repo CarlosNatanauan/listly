@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 import '../models/note.dart';
+import '../models/user.dart';
 
 // Define a StateNotifier to manage the notes state
 class NotesNotifier extends StateNotifier<AsyncValue<List<Note>>> {

@@ -2,17 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/notes_provider.dart';
 import '../models/note.dart';
-import '../widgets/add_note_widget.dart'; // Import the AddNoteWidget
+import '../widgets/add_note_widget.dart';
 import 'dart:convert';
+import '../providers/auth_providers.dart';
 
-class NotesScreen extends ConsumerWidget {
+class NotesScreen extends ConsumerStatefulWidget {
   final String token;
 
   NotesScreen({Key? key, required this.token}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final notesAsyncValue = ref.watch(notesProvider(token));
+  _NotesScreenState createState() => _NotesScreenState();
+}
+
+class _NotesScreenState extends ConsumerState<NotesScreen> {
+  String _searchQuery = '';
+
+  @override
+  Widget build(BuildContext context) {
+    final notesAsyncValue = ref.watch(notesProvider(widget.token));
 
     return Scaffold(
       body: Column(
@@ -24,7 +32,7 @@ class NotesScreen extends ConsumerWidget {
               child: Text(
                 'Notes',
                 style: TextStyle(
-                  color: Colors.black54,
+                  color: Color(0xFFFF725E),
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
                 ),
@@ -35,10 +43,20 @@ class NotesScreen extends ConsumerWidget {
           Expanded(
             child: notesAsyncValue.when(
               data: (notes) {
+                // Filter notes based on the search query
+                final filteredNotes = notes.where((note) {
+                  return note.title
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase()) ||
+                      _extractPlainText(note.content)
+                          .toLowerCase()
+                          .contains(_searchQuery.toLowerCase());
+                }).toList();
+
                 return ListView.builder(
-                  itemCount: notes.length,
+                  itemCount: filteredNotes.length,
                   itemBuilder: (context, index) {
-                    final note = notes[index];
+                    final note = filteredNotes[index];
                     return Dismissible(
                       key: Key(note.id),
                       background: Container(
@@ -49,9 +67,8 @@ class NotesScreen extends ConsumerWidget {
                       ),
                       direction: DismissDirection.endToStart,
                       onDismissed: (direction) async {
-                        // Call delete method on the notifier
                         await ref
-                            .read(notesProvider(token).notifier)
+                            .read(notesProvider(widget.token).notifier)
                             .deleteNote(note.id);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Note deleted')),
@@ -65,17 +82,15 @@ class NotesScreen extends ConsumerWidget {
                               builder: (context) => AddNoteWidget(note: note),
                             ),
                           ).then((_) {
-                            // This will be triggered after returning from AddNoteWidget
                             ref
-                                .read(notesProvider(token).notifier)
+                                .read(notesProvider(widget.token).notifier)
                                 .fetchNotes();
                           });
                         },
                         child: Container(
-                          width: double
-                              .infinity, // Ensure the card takes full width
+                          width: double.infinity,
                           constraints: BoxConstraints(
-                            minHeight: 100, // Minimum height for all cards
+                            minHeight: 100,
                           ),
                           child: Card(
                             color: Colors.white,
@@ -96,13 +111,18 @@ class NotesScreen extends ConsumerWidget {
                                   Text(
                                     note.title.isEmpty ? '' : note.title,
                                     style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold),
+                                      color: Colors.black87,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                   SizedBox(height: 8),
                                   Text(
                                     _extractPlainText(note.content),
-                                    style: TextStyle(fontSize: 16),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w300,
+                                    ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -163,7 +183,9 @@ class NotesScreen extends ConsumerWidget {
               prefixIcon: Icon(Icons.search, size: 20.0, color: Colors.grey),
             ),
             onChanged: (value) {
-              // Placeholder for search functionality
+              setState(() {
+                _searchQuery = value;
+              });
             },
           ),
         ),

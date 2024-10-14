@@ -6,11 +6,12 @@ import 'todo_screen.dart';
 import '../widgets/add_todo_widget.dart'; // Import the AddToDoWidget
 import '../widgets/add_note_widget.dart'; // Import Add Notes screen (placeholder)
 import '../services/api_service.dart';
-import '../providers/providers.dart';
+import '../providers/auth_providers.dart';
 import '../../models/todo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:convert'; // For jsonDecode
 import '../providers/fab_visibility_provider.dart'; // Import the FAB visibility provider
+import '../providers/tasks_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   final String welcomeMessage;
@@ -37,22 +38,14 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   Future<void> _fetchTasks() async {
     final authService = ref.read(authServiceProvider);
-    _token = await authService.getToken(); // Fetch and store the token
+    String? token = await authService.getToken();
 
-    if (_token != null) {
+    if (token != null) {
+      _token = token; // Store the fetched token here
       try {
-        final List<dynamic> response =
-            await ApiService.fetchTasks(_token!); // Use the stored token
-
-        if (response is List) {
-          ref.read(tasksProvider.notifier).setTasks(
-                response.map((taskJson) => ToDo.fromJson(taskJson)).toList(),
-              );
-        } else {
-          throw Exception('Invalid response format');
-        }
+        await ref.read(tasksProvider.notifier).fetchTasks(token);
       } catch (error) {
-        _showErrorSnackBar('Error fetching tasks: $error');
+        _showErrorSnackBar(error.toString());
       }
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
@@ -77,15 +70,11 @@ class _MainPageState extends ConsumerState<MainPage> {
       }
 
       try {
-        final response = await ApiService.addTask(newToDo, token);
-        final Map<String, dynamic> jsonResponse = jsonDecode(response);
-        final ToDo newTask = ToDo.fromJson(jsonResponse);
-
-        ref.read(tasksProvider.notifier).addTask(newTask);
+        await ref.read(tasksProvider.notifier).addTaskViaAPI(newToDo, token);
         _toDoTextController.clear();
         _isAddToDoVisible = false;
       } catch (error) {
-        _showErrorSnackBar('Error adding task: $error');
+        _showErrorSnackBar(error.toString());
       }
     }
   }
@@ -98,10 +87,14 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   void _handleFABPress() {
     if (_selectedIndex == 0) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => AddNoteWidget()),
-      );
+      if (_token != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddNoteWidget()),
+        );
+      } else {
+        _showErrorSnackBar('No authentication token found. Please log in.');
+      }
     } else if (_selectedIndex == 1) {
       _toggleAddToDoWidget();
     }
@@ -132,7 +125,10 @@ class _MainPageState extends ConsumerState<MainPage> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.settings),
+                icon: Icon(
+                  Icons.settings,
+                  color: Color(0xFFFF725E),
+                ),
                 onPressed: () {
                   print('Settings pressed');
                 },

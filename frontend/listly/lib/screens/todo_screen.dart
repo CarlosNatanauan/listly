@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/todo.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../providers/providers.dart';
+import '../providers/auth_providers.dart';
 import '../widgets/edit_todo_widget.dart';
 import '../providers/fab_visibility_provider.dart';
+import '../providers/tasks_provider.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
   @override
@@ -47,7 +48,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
             child: Text(
               'To-do',
               style: TextStyle(
-                color: Colors.black54,
+                color: Color(0xFFFF725E),
                 fontSize: 30,
                 fontWeight: FontWeight.bold,
               ),
@@ -244,6 +245,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   child: Text(
                     task.task,
                     style: TextStyle(
+                        color: Colors.black87,
                         fontSize: 16,
                         decoration:
                             task.completed ? TextDecoration.lineThrough : null,
@@ -270,9 +272,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     }
 
     try {
-      await ApiService.deleteTask(task.id, token);
-      ref.read(tasksProvider.notifier).removeTask(task.id);
-
+      await ref.read(tasksProvider.notifier).deleteTaskViaAPI(task.id, token);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${task.task} deleted')),
       );
@@ -295,9 +295,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     }
 
     try {
-      await ApiService.updateTask(task, token);
-      ref.read(tasksProvider.notifier).updateTask(task);
-
+      await ref.read(tasksProvider.notifier).updateTaskViaAPI(task, token);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Task updated successfully')),
       );
