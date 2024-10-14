@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/todo.dart';
 import '../services/api_service.dart';
 import '../services/auth_service.dart';
-import '../providers/providers.dart';
+import '../providers/auth_providers.dart';
 import '../widgets/edit_todo_widget.dart';
 import '../providers/fab_visibility_provider.dart';
+import '../providers/tasks_provider.dart';
 
 class TodoScreen extends ConsumerStatefulWidget {
   @override
@@ -38,6 +40,21 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
     return Column(
       children: [
+        // Title for the To-do screen
+        Padding(
+          padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 4.0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'To-do',
+              style: TextStyle(
+                color: Color(0xFFFF725E),
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
         _buildSearchBar(),
         Expanded(
           child: Stack(
@@ -46,7 +63,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 children: [
                   if (notCompletedTasks.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
                       child:
                           Text('Not Completed', style: TextStyle(fontSize: 16)),
                     ),
@@ -55,7 +72,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   ],
                   if (completedTasks.isNotEmpty) ...[
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
                       child: InkWell(
                         onTap: () {
                           setState(() {
@@ -228,10 +245,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   child: Text(
                     task.task,
                     style: TextStyle(
-                      fontSize: 16,
-                      decoration:
-                          task.completed ? TextDecoration.lineThrough : null,
-                    ),
+                        color: Colors.black87,
+                        fontSize: 16,
+                        decoration:
+                            task.completed ? TextDecoration.lineThrough : null,
+                        fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -254,9 +272,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     }
 
     try {
-      await ApiService.deleteTask(task.id, token);
-      ref.read(tasksProvider.notifier).removeTask(task.id);
-
+      await ref.read(tasksProvider.notifier).deleteTaskViaAPI(task.id, token);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${task.task} deleted')),
       );
@@ -279,9 +295,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     }
 
     try {
-      await ApiService.updateTask(task, token);
-      ref.read(tasksProvider.notifier).updateTask(task);
-
+      await ref.read(tasksProvider.notifier).updateTaskViaAPI(task, token);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Task updated successfully')),
       );

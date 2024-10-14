@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/todo.dart'; // Import your ToDo model
+import '../models/note.dart'; // Import your ToDo model
 
 class ApiService {
   static const String _baseUrl = 'http://192.168.0.111:5000'; // Backend API URL
@@ -113,6 +114,78 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to delete task: ${response.body}');
+    }
+  }
+
+  //Notes
+  static Future<List<Note>> fetchNotes(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/notes'), // Adjust to your backend URL
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonResponse = jsonDecode(response.body);
+      return jsonResponse.map((note) => Note.fromJson(note)).toList();
+    } else {
+      throw Exception('Failed to load notes');
+    }
+  }
+
+  //Saving notes
+  static Future<Note> saveNote(Note note, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/notes'), // Adjust to your backend URL
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Include authorization token
+      },
+      body: jsonEncode({
+        'title': note.title,
+        'content': note.content,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      return Note.fromJson(
+          jsonDecode(response.body)); // Convert the saved note to Note object
+    } else {
+      throw Exception('Failed to save note');
+    }
+  }
+
+  static Future<void> updateNote(Note note, String token) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl/notes/${note.id}'), // Use note ID in the URL
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token', // Include authorization token
+      },
+      body: jsonEncode({
+        'title': note.title,
+        'content': note.content,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update note');
+    }
+  }
+
+  static Future<void> deleteNote(String noteId, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/notes/$noteId'), // Adjust to your backend URL
+      headers: {
+        'Authorization': 'Bearer $token', // Include token for authentication
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete note');
     }
   }
 }
