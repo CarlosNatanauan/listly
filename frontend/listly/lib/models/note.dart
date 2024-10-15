@@ -13,14 +13,26 @@ class Note {
 
   factory Note.fromJson(Map<String, dynamic> json) {
     return Note(
-      id: json['_id'],
-      title: json['title'],
-      content: json['content'],
-      createdAt: DateTime.parse(json['createdAt']),
+      id: json['_id'] ?? '', // Fallback to empty string if id is null
+      title:
+          json['title'] ?? 'Untitled', // Default to 'Untitled' if title is null
+      content:
+          json['content'] ?? '[]', // Default to empty array if content is null
+      createdAt:
+          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
-  // CopyWith method to create a new instance with modified values
+  Map<String, dynamic> toJson() {
+    return {
+      '_id': id.isEmpty ? '' : id, // Ensure '_id' is a string
+      'title': title.isEmpty ? 'Untitled' : title, // Handle empty or null title
+      'content':
+          content.isEmpty ? '[]' : content, // Handle empty or null content
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
   Note copyWith({
     String? id,
     String? title,
@@ -28,7 +40,7 @@ class Note {
     DateTime? createdAt,
   }) {
     return Note(
-      id: id ?? this.id, // Keep the existing id unless provided
+      id: id ?? this.id,
       title: title ?? this.title,
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,

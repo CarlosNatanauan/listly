@@ -157,7 +157,7 @@ class ApiService {
     }
   }
 
-  static Future<void> updateNote(Note note, String token) async {
+  static Future<Note> updateNote(Note note, String token) async {
     final response = await http.put(
       Uri.parse('$_baseUrl/notes/${note.id}'), // Use note ID in the URL
       headers: {
@@ -170,7 +170,10 @@ class ApiService {
       }),
     );
 
-    if (response.statusCode != 200) {
+    if (response.statusCode == 200) {
+      // Return the updated Note object
+      return Note.fromJson(jsonDecode(response.body));
+    } else {
       throw Exception('Failed to update note');
     }
   }

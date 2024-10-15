@@ -3,15 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'notes_screen.dart';
 import 'todo_screen.dart';
-import '../widgets/add_todo_widget.dart'; // Import the AddToDoWidget
-import '../widgets/add_note_widget.dart'; // Import Add Notes screen (placeholder)
-import '../services/api_service.dart';
-import '../providers/auth_providers.dart';
-import '../../models/todo.dart';
+import '../widgets/add_todo_widget.dart';
+import '../widgets/add_note_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:convert'; // For jsonDecode
-import '../providers/fab_visibility_provider.dart'; // Import the FAB visibility provider
+import '../providers/fab_visibility_provider.dart';
 import '../providers/tasks_provider.dart';
+import '../providers/socket_service_provider.dart'; // Import your socketServiceProvider
+import '../models/note.dart';
+import '../providers/notes_provider.dart';
+import '../providers/auth_providers.dart'; // Add this import
 
 class MainPage extends ConsumerStatefulWidget {
   final String welcomeMessage;
@@ -27,29 +27,58 @@ class _MainPageState extends ConsumerState<MainPage> {
   final double _bottomNavBarHeight = 55.0;
   bool _isAddToDoVisible = false;
   TextEditingController _toDoTextController = TextEditingController();
-
   String? _token; // Variable to store the token
+  bool _isSocketConnected = false; // To track socket connection status
 
   @override
   void initState() {
     super.initState();
-    _fetchTasks();
+    _fetchTokenAndTasks(); // Fetch token and tasks together
   }
 
-  Future<void> _fetchTasks() async {
+  Future<void> _fetchTokenAndTasks() async {
     final authService = ref.read(authServiceProvider);
     String? token = await authService.getToken();
 
     if (token != null) {
-      _token = token; // Store the fetched token here
-      try {
-        await ref.read(tasksProvider.notifier).fetchTasks(token);
-      } catch (error) {
-        _showErrorSnackBar(error.toString());
-      }
+      _token = token; // Store the fetched token
+      _initializeSocketConnection(); // Initialize socket after token is fetched
+      _fetchTasks(); // Fetch tasks after token is available
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
+  }
+
+  void _initializeSocketConnection() {
+    final socketService = ref.read(socketServiceProvider);
+    if (_token != null && !_isSocketConnected) {
+      socketService.connect(_token!, (updatedNote) {
+        // Whenever a note is updated, fetch the latest notes
+        ref.read(notesProvider(_token!).notifier).fetchNotes();
+      });
+      _isSocketConnected = true; // Mark the socket as connected
+    } else {
+      print('No valid token, cannot connect to socket.');
+    }
+  }
+
+  Future<void> _fetchTasks() async {
+    if (_token != null) {
+      try {
+        await ref.read(tasksProvider.notifier).fetchTasks(_token!);
+      } catch (error) {
+        _showErrorSnackBar(error.toString());
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _toDoTextController.dispose();
+    ref
+        .read(socketServiceProvider)
+        .disconnect(); // Disconnect socket when page is disposed
+    super.dispose();
   }
 
   void _toggleAddToDoWidget() {
@@ -61,16 +90,13 @@ class _MainPageState extends ConsumerState<MainPage> {
   void _saveToDo() async {
     String newToDo = _toDoTextController.text.trim();
     if (newToDo.isNotEmpty) {
-      final authService = ref.read(authServiceProvider);
-      String? token = await authService.getToken();
-
-      if (token == null) {
+      if (_token == null) {
         _showErrorSnackBar('No authentication token found. Please log in.');
         return;
       }
 
       try {
-        await ref.read(tasksProvider.notifier).addTaskViaAPI(newToDo, token);
+        await ref.read(tasksProvider.notifier).addTaskViaAPI(newToDo, _token!);
         _toDoTextController.clear();
         _isAddToDoVisible = false;
       } catch (error) {
@@ -103,8 +129,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(tasksProvider);
-    final isFABVisible =
-        ref.watch(fabVisibilityProvider); // Listen to FAB visibility
+    final isFABVisible = ref.watch(fabVisibilityProvider);
 
     return WillPopScope(
       onWillPop: () async {
@@ -161,7 +186,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                 backgroundColor: Color(0xFFFF725E),
                 elevation: 5,
               )
-            : null, // Hide FAB when edit or add widget is visible
+            : null,
         bottomNavigationBar: FlashyTabBar(
           height: _bottomNavBarHeight,
           selectedIndex: _selectedIndex,

@@ -4,7 +4,8 @@ import '../providers/notes_provider.dart';
 import '../models/note.dart';
 import '../widgets/add_note_widget.dart';
 import 'dart:convert';
-import '../providers/auth_providers.dart';
+import '../providers/socket_service_provider.dart'; // Import the SocketService provider
+import 'package:intl/intl.dart'; // Import for formatting dates and times
 
 class NotesScreen extends ConsumerStatefulWidget {
   final String token;
@@ -51,7 +52,10 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       _extractPlainText(note.content)
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase());
-                }).toList();
+                })
+                    // Sort by 'createdAt' in descending order (latest first)
+                    .toList()
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                 return ListView.builder(
                   itemCount: filteredNotes.length,
@@ -67,9 +71,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       ),
                       direction: DismissDirection.endToStart,
                       onDismissed: (direction) async {
-                        await ref
-                            .read(notesProvider(widget.token).notifier)
-                            .deleteNote(note.id);
+                        await _deleteNoteAndEmit(note.id);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Note deleted')),
                         );
@@ -82,6 +84,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                               builder: (context) => AddNoteWidget(note: note),
                             ),
                           ).then((_) {
+                            // Fetch the latest notes when returning from the add note screen
                             ref
                                 .read(notesProvider(widget.token).notifier)
                                 .fetchNotes();
@@ -102,8 +105,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Format date and time using intl package
                                   Text(
-                                    "${note.createdAt.toIso8601String().split("T").first}",
+                                    _formatDateTime(note.createdAt),
                                     style: TextStyle(
                                         fontSize: 14, color: Colors.grey),
                                   ),
@@ -145,6 +149,29 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     );
   }
 
+  // Format Date and Time for the card display
+  String _formatDateTime(DateTime dateTime) {
+    final formatter = DateFormat('yyyy-MM-dd HH:mm:ss'); // Customize the format
+    return formatter.format(dateTime);
+  }
+
+  // Handle deleting a note and emitting a socket update for deletion
+  Future<void> _deleteNoteAndEmit(String noteId) async {
+    final notesNotifier = ref.read(notesProvider(widget.token).notifier);
+    final socketService = ref.read(socketServiceProvider);
+
+    try {
+      await notesNotifier.deleteNote(noteId);
+      socketService.emitNoteUpdate(
+          {'id': noteId, 'deleted': true}); // Emit delete event via socket
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete note: ${e.toString()}')),
+      );
+    }
+  }
+
+  // Helper function to extract plain text from note content
   String _extractPlainText(String content) {
     try {
       final parsedContent = jsonDecode(content);
@@ -163,6 +190,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     }
   }
 
+  // Search bar widget
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),

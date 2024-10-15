@@ -4,20 +4,20 @@ import 'package:flutter/services.dart';
 import 'package:parchment_delta/parchment_delta.dart';
 import '../services/api_service.dart'; // Import your ApiService
 import '../models/note.dart'; // Import your Note model
-import '../services/auth_service.dart'; // Import your AuthService
 import 'dart:convert';
 import '../providers/notes_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
+import '../services/socket_service.dart'; // Import SocketService
+import '../providers/socket_service_provider.dart';
+import '../providers/auth_providers.dart'; // Import the AuthService provider
 
 class AddNoteWidget extends ConsumerWidget {
-  // Change to ConsumerWidget
   final Note? note; // Keep 'note' here as final
 
   const AddNoteWidget({Key? key, this.note}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Get the ref in build method
     return _AddNoteWidgetContent(
         note: note, ref: ref); // Pass ref to the content
   }
@@ -38,23 +38,27 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
   final TextEditingController titleController = TextEditingController();
   FleatherController? _controller;
   String? _token;
-  Note? _currentNote; // Local variable to store the current note
+  Note? _currentNote;
+  late SocketService socketService;
+  bool isEditing = false; // Track if the note is in edit mode
 
   @override
   void initState() {
     super.initState();
-    _currentNote = widget.note; // Initialize _currentNote with widget's note
+    _currentNote = widget.note;
     _getToken();
+    socketService = widget.ref
+        .read(socketServiceProvider); // Get the globally initialized socket
 
     // Initialize title and content if editing an existing note
     if (_currentNote != null) {
       titleController.text = _currentNote!.title;
-
-      // Decode the content from the note and set the document
       if (_currentNote!.content.isNotEmpty) {
         dynamic content = jsonDecode(_currentNote!.content);
         _setDocumentFromJson(content);
       }
+      isEditing = true; // Set to editing mode after initialization
+      _listenForNoteUpdates(); // Listen for updates
     } else {
       _initController(); // Call only when adding a new note (not editing)
     }
@@ -69,9 +73,8 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
         deleteRules: [],
       ).merge(ParchmentHeuristics.fallback);
       final doc = ParchmentDocument.fromJson(
-        jsonDecode(result) as List<dynamic>, // Ensure this is a List
-        heuristics: heuristics,
-      );
+          jsonDecode(result) as List<dynamic>,
+          heuristics: heuristics);
       _controller = FleatherController(document: doc);
     } catch (err, st) {
       print('Cannot read welcome.json: $err\n$st');
@@ -81,48 +84,118 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
   }
 
   void _setDocumentFromJson(dynamic content) {
-    print('Raw content received: $content');
-
     try {
-      // If the content is a string, parse it to JSON
-      final List<dynamic> parsedContent = content is String
-          ? jsonDecode(content)
-          : content; // Handle pre-parsed List<dynamic>
-
-      // Initialize an empty Delta
+      final List<dynamic> parsedContent =
+          content is String ? jsonDecode(content) : content;
       final delta = Delta();
-
-      // Iterate through the parsed content and populate the Delta
       for (var item in parsedContent) {
         if (item is Map<String, dynamic> && item.containsKey('insert')) {
-          // Check if there are attributes like bold and pass them as well
-          Map<String, dynamic>? attributes;
-          if (item.containsKey('attributes')) {
-            attributes = Map<String, dynamic>.from(item['attributes']);
-          }
-
-          // Insert the text with any associated attributes
-          delta.insert(item['insert'], attributes);
-        } else {
-          print('Unrecognized content format: $item');
+          delta.insert(item['insert'], item['attributes'] ?? {});
         }
       }
-
-      // Create a new ParchmentDocument from the Delta and set the controller
       final newDocument = ParchmentDocument.fromDelta(delta);
       _controller = FleatherController(document: newDocument);
-      print('Successfully created document from raw content.');
     } catch (e) {
-      print('Failed to create document: $e');
-      _controller = FleatherController(); // Fallback to an empty document
+      _controller = FleatherController();
     }
-
     setState(() {});
   }
 
   Future<void> _getToken() async {
-    final authService = AuthService();
+    final authService = widget.ref.read(authServiceProvider);
     _token = await authService.getToken();
+
+    if (_token != null) {
+      socketService.connect(
+          _token!, _handleNoteUpdate); // Pass the token and callback function
+    } else {
+      print('Token not found, unable to connect to socket.');
+    }
+  }
+
+  void _handleNoteUpdate(Note updatedNote) {
+    if (_currentNote != null && _currentNote!.id == updatedNote.id) {
+      // Update the current note if it matches the updated one
+      _setDocumentFromJson(jsonDecode(updatedNote.content));
+      titleController.text = updatedNote.title;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Note updated remotely')),
+      );
+    }
+  }
+
+  void _listenForNoteUpdates() {
+    if (_currentNote != null && _currentNote!.id.isNotEmpty) {
+      socketService.onNoteUpdate(_currentNote!.id, _handleNoteUpdate);
+    }
+  }
+
+  void _saveOrUpdateNote() async {
+    final title = titleController.text.isEmpty
+        ? 'Untitled'
+        : titleController.text; // Ensure there's always a title
+    final content = _controller?.document;
+
+    // Check if content is null, otherwise use an empty document
+    String contentJson = content != null ? jsonEncode(content.toJson()) : '[]';
+
+    print('Saving note with title: $title');
+    print('Content JSON: $contentJson');
+
+    if (_token != null) {
+      try {
+        // Check if we're editing an existing note or adding a new one
+        final isEditingNow =
+            _currentNote != null && _currentNote!.id.isNotEmpty;
+
+        // Create the note object, ensuring all fields are non-null
+        final note = Note(
+          id: isEditingNow
+              ? _currentNote!.id
+              : '', // Retain the note's ID if editing, otherwise create new note with empty ID
+          title: title.isEmpty ? 'Untitled' : title,
+          content: contentJson.isEmpty ? '[]' : contentJson,
+          createdAt: isEditingNow ? _currentNote!.createdAt : DateTime.now(),
+        );
+
+        // Log the note details for debugging
+        print(
+            'Saving note with id: ${note.id}, title: ${note.title}, content: ${note.content}');
+
+        // Save or update the note via your provider
+        final notesNotifier = widget.ref.read(notesProvider(_token!).notifier);
+        final updatedNote = await notesNotifier.addOrUpdateNote(note);
+
+        // After saving, update _currentNote with the returned note (including the new ID if it was a new note)
+        setState(() {
+          _currentNote = updatedNote; // Update with the saved note
+          isEditing = true; // Always in editing mode after the first save
+        });
+
+        // Emit the note update to other devices via Socket.IO
+        final emittedNote = _currentNote!.toJson(); // Use updated note
+        socketService.emitNoteUpdate(emittedNote);
+
+        // Dismiss the keyboard after saving
+        FocusScope.of(context).unfocus();
+
+        // Show a Snackbar to confirm the save
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Note saved successfully')),
+        );
+      } catch (e) {
+        // Handle any errors and show a message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save note: ${e.toString()}')),
+        );
+        print('Error saving note: $e');
+      }
+    } else {
+      // Handle the case when the user is not authenticated
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User is not authenticated')),
+      );
+    }
   }
 
   @override
@@ -132,56 +205,11 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
     super.dispose();
   }
 
-  void _saveOrUpdateNote() async {
-    final title = titleController.text.isEmpty ? '' : titleController.text;
-    final content = _controller?.document;
-
-    String contentJson = jsonEncode(content?.toJson() ?? []);
-
-    if (_token != null) {
-      try {
-        final isEditing = _currentNote != null && _currentNote!.id.isNotEmpty;
-
-        final note = Note(
-          id: isEditing ? _currentNote!.id : '',
-          title: title,
-          content: contentJson,
-          createdAt: isEditing ? _currentNote!.createdAt : DateTime.now(),
-        );
-
-        final notesNotifier =
-            widget.ref.read(notesProvider(_token!).notifier); // Use ref here
-        await notesNotifier.addOrUpdateNote(note); // Add or update note
-
-        // Dismiss the keyboard
-        FocusScope.of(context).unfocus();
-
-        // Optionally show a Snackbar to confirm save
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Note saved successfully')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save note: ${e.toString()}')),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User is not authenticated')),
-      );
-    }
-  }
-
-  void _resetEditor() {
-    _controller = FleatherController();
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_currentNote == null ? 'Add Note' : 'Edit Note'),
+        title: Text(isEditing ? 'Edit Note' : 'Add Note'),
         actions: [
           IconButton(
             icon: Icon(Icons.save),
