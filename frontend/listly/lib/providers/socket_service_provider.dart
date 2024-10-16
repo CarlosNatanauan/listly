@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/socket_service.dart';
+import '../services/socket_service_notes.dart';
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
 import '../providers/auth_providers.dart';

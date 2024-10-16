@@ -7,7 +7,7 @@ import '../models/note.dart'; // Import your Note model
 import 'dart:convert';
 import '../providers/notes_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
-import '../services/socket_service.dart'; // Import SocketService
+import '../services/socket_service_notes.dart'; // Import SocketService
 import '../providers/socket_service_provider.dart';
 import '../providers/auth_providers.dart'; // Import the AuthService provider
 

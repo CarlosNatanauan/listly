@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/todo.dart';
-import '../services/api_service.dart';
+import '../models/todo.dart';
 import '../services/auth_service.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/edit_todo_widget.dart';
 import '../providers/fab_visibility_provider.dart';
 import '../providers/tasks_provider.dart';
+import '../providers/socket_service_tasks_provider.dart'; // Import the Socket Provider
 
 class TodoScreen extends ConsumerStatefulWidget {
   @override
@@ -40,7 +39,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
     return Column(
       children: [
-        // Title for the To-do screen
         Padding(
           padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 4.0),
           child: Align(
@@ -91,7 +89,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                         ),
                       ),
                     ),
-                    // Only display completed tasks if the toggle is on
                     if (_showCompletedTasks) ...[
                       ...completedTasks
                           .map((task) => _buildTaskCard(context, task)),
@@ -112,6 +109,66 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     );
   }
 
+  Widget _buildTaskCard(BuildContext context, ToDo task) {
+    return GestureDetector(
+      onTap: () => _showEditToDoWidget(task),
+      child: Dismissible(
+        key: Key(task.id),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20.0),
+          color: Colors.red,
+          child: Icon(Icons.delete, color: Colors.white),
+        ),
+        direction: DismissDirection.endToStart,
+        onDismissed: (direction) async {
+          await _deleteTask(task);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${task.task} deleted')),
+          );
+        },
+        child: Card(
+          color: Colors.white,
+          elevation: 1,
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: task.completed,
+                  activeColor: Color(0xFFFF725E),
+                  onChanged: (bool? newValue) async {
+                    if (newValue != null) {
+                      final updatedTask = ToDo(
+                        id: task.id,
+                        task: task.task,
+                        completed: newValue,
+                      );
+                      await _updateTask(updatedTask);
+                    }
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    task.task,
+                    style: TextStyle(
+                      color: Colors.black87,
+                      fontSize: 16,
+                      decoration:
+                          task.completed ? TextDecoration.lineThrough : null,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
@@ -125,21 +182,16 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 1.0),
           child: TextField(
             controller: _searchController,
-            style: TextStyle(
-              fontSize: 14.0, // Reduced font size
-            ),
+            style: TextStyle(fontSize: 14.0),
             decoration: InputDecoration(
               labelText: 'Search Tasks',
-              labelStyle:
-                  TextStyle(fontSize: 14.0), // Adjust the label font size
+              labelStyle: TextStyle(fontSize: 14.0),
               border: InputBorder.none,
-              prefixIcon: Icon(Icons.search,
-                  size: 20.0, color: Colors.grey), // Smaller icon size
+              prefixIcon: Icon(Icons.search, size: 20.0, color: Colors.grey),
             ),
             onChanged: (value) {
               setState(() {
                 _searchQuery = value;
-                // No automatic change to _showCompletedTasks here
               });
             },
           ),
@@ -175,25 +227,21 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         task: editedTaskText,
         completed: _selectedTask!.completed,
       );
-
       final authService = ref.read(authServiceProvider);
       final token = await authService.getToken();
-
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to retrieve authentication token')),
         );
         return;
       }
-
       try {
-        await ApiService.updateTask(updatedTask, token);
-        ref.read(tasksProvider.notifier).updateTask(updatedTask);
-
+        await ref
+            .read(tasksProvider.notifier)
+            .updateTaskViaAPI(updatedTask, token);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Task updated successfully')),
         );
-
         _toggleEditToDoWidget();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -201,63 +249,6 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         );
       }
     }
-  }
-
-  Widget _buildTaskCard(BuildContext context, ToDo task) {
-    return GestureDetector(
-      onTap: () => _showEditToDoWidget(task),
-      child: Dismissible(
-        key: Key(task.id),
-        background: Container(
-          alignment: Alignment.centerRight,
-          padding: const EdgeInsets.only(right: 20.0),
-          color: Colors.red,
-          child: Icon(Icons.delete, color: Colors.white),
-        ),
-        direction: DismissDirection.endToStart,
-        onDismissed: (direction) async {
-          await _deleteTask(task);
-        },
-        child: Card(
-          color: Colors.white,
-          elevation: 1,
-          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: task.completed,
-                  activeColor: Color(0xFFFF725E),
-                  onChanged: (bool? newValue) async {
-                    if (newValue != null) {
-                      final updatedTask = ToDo(
-                        id: task.id,
-                        task: task.task,
-                        completed: newValue,
-                      );
-
-                      await _updateTask(updatedTask);
-                    }
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    task.task,
-                    style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                        decoration:
-                            task.completed ? TextDecoration.lineThrough : null,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _deleteTask(ToDo task) async {
@@ -268,15 +259,30 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to retrieve authentication token')),
       );
+      print(
+          'Failed to delete task: No authentication token'); // Debug statement
       return;
     }
 
     try {
+      // Delete task from the API
+      print('Deleting task via API: ${task.id}'); // Debug statement
       await ref.read(tasksProvider.notifier).deleteTaskViaAPI(task.id, token);
+
+      // Emit task deletion event via socket
+      print('Emitting task deletion via socket: ${task.id}'); // Debug statement
+      ref.read(socketServiceTasksProvider).emitTaskUpdate({
+        '_id': task.id,
+        'deleted': true,
+      });
+
+      // Notify the user
+      print('Task deleted successfully: ${task.id}'); // Debug statement
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${task.task} deleted')),
       );
     } catch (error) {
+      print('Error deleting task: $error'); // Debug statement
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error deleting task: $error')),
       );

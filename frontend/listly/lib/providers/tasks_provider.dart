@@ -1,23 +1,86 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/todo.dart';
 import '../services/api_service.dart';
-import '../providers/auth_providers.dart';
-import 'dart:convert'; // Add this import at the top of your file
+import '../services/socket_service_tasks.dart'; // Import SocketServiceTasks
+import 'dart:convert';
+import './auth_providers.dart';
+import './socket_service_tasks_provider.dart';
 
 class TaskNotifier extends StateNotifier<List<ToDo>> {
-  TaskNotifier() : super([]);
+  final SocketServiceTasks socketService;
 
-  // Method to add a new task
-  void addTask(ToDo task) {
+  TaskNotifier(this.socketService, String token) : super([]) {
+    // Connect to the socket service
+    socketService.connect(token, (Map<String, dynamic> updatedTaskJson) {
+      print('Socket event received: $updatedTaskJson'); // Debug statement
+
+      final updatedTaskId = updatedTaskJson['id'] ?? updatedTaskJson['_id'];
+
+      // Check if the task is deleted
+      if (updatedTaskJson['deleted'] == true) {
+        print('Task marked as deleted: $updatedTaskId'); // Debug statement
+        removeTask(updatedTaskId);
+      } else if (state.every((task) => task.id != updatedTaskId)) {
+        // Handle new task addition by creating a ToDo object
+        final newTask = ToDo.fromJson(updatedTaskJson);
+        addTask(newTask, fromSocket: true); // Mark as added from socket
+      } else {
+        print('Task update received: $updatedTaskId'); // Debug statement
+        final updatedTask = ToDo.fromJson(updatedTaskJson);
+        updateTask(updatedTask); // Call updateTask directly
+      }
+    });
+  }
+
+  Future<void> removeTask(String? taskId) async {
+    if (taskId == null || taskId.isEmpty) {
+      print('Invalid task ID for removal'); // Debug statement
+      return;
+    }
+
+    print('Removing task with ID: $taskId'); // Debug statement
+    state = state.where((task) => task.id != taskId).toList();
+
+    // Emit task deletion to the server
+    print('Emitting task deletion for ID: $taskId'); // Debug statement
+    socketService.emitTaskUpdate({
+      '_id': taskId,
+      'deleted': true, // Mark the task as deleted
+    });
+  }
+
+  Future<void> addTask(ToDo task, {bool fromSocket = false}) async {
+    print(
+        'Adding task: ${task.id}, fromSocket: $fromSocket'); // Debug statement
+
+    // Prevent duplication by checking if it's already in the state
+    if (state.any((t) => t.id == task.id)) {
+      print('Task already exists: ${task.id}'); // Debug statement
+      return;
+    }
+
+    // Add task to the state
     state = [...state, task];
+
+    // Emit task update only if it wasn't added via the socket
+    if (!fromSocket) {
+      print('Emitting task update: ${task.toJson()}'); // Debug statement
+      // Add an identifier to indicate this is an addition
+      socketService.emitTaskUpdate({
+        ...task.toJson(),
+        'added': true, // Mark the task as added
+      });
+    }
   }
 
   // Method to update an existing task
-  void updateTask(ToDo task) {
+  Future<void> updateTask(ToDo task) async {
     state = [
       for (final t in state)
         if (t.id == task.id) task else t
     ];
+    print('Emitting task update: ${task.toJson()}'); // Debug statement
+    socketService.emitTaskUpdate(task.toJson()); // Emit updated task to socket
   }
 
   // Method to set initial tasks from API
@@ -30,39 +93,34 @@ class TaskNotifier extends StateNotifier<List<ToDo>> {
     }
   }
 
-  // Method to remove a task by ID
-  void removeTask(String taskId) {
-    state = state.where((task) => task.id != taskId).toList();
-  }
-
-// Method to add a task through API
   Future<void> addTaskViaAPI(String taskDescription, String token) async {
     final response = await ApiService.addTask(taskDescription, token);
-
-    // Parse the response from JSON string to Map
     final Map<String, dynamic> jsonResponse = jsonDecode(response);
-
     final ToDo newTask = ToDo.fromJson(jsonResponse);
-    addTask(newTask);
+
+    // Emit the new task to the socket
+    socketService
+        .emitTaskUpdate(newTask.toJson()); // Emit the added task to socket
+
+    addTask(newTask); // Handle adding to the state
   }
 
-  // Method to update a task through API
   Future<void> updateTaskViaAPI(ToDo task, String token) async {
     await ApiService.updateTask(task, token);
-    updateTask(task);
+    updateTask(task); // Handle updating state
   }
 
-  // Method to delete a task through API
   Future<void> deleteTaskViaAPI(String taskId, String token) async {
     await ApiService.deleteTask(taskId, token);
-    removeTask(taskId);
+    removeTask(taskId); // Handle removing from the state
   }
 }
 
 // Provider for TaskNotifier
 final tasksProvider = StateNotifierProvider<TaskNotifier, List<ToDo>>((ref) {
-  return TaskNotifier();
+  final socketService =
+      ref.watch(socketServiceTasksProvider); // Watch socket service
+  final token =
+      ref.watch(authServiceProvider).currentUser?.token ?? ''; // Get the token
+  return TaskNotifier(socketService, token);
 });
-
-// Provider for the visibility state of the AddToDoWidget
-final addToDoWidgetVisibilityProvider = StateProvider<bool>((ref) => false);
