@@ -42,7 +42,7 @@ io.on('connection', (socket) => {
 // Import routes after the app initialization
 const authRoutes = require('./routes/authRoutes');
 const noteRoutes = require('./routes/noteRoutes')(io); // Pass io to the note routes
-const taskRoutes = require('./routes/taskRoutes');
+const taskRoutes = require('./routes/taskRoutes')(io); // Pass io to the task routes
 
 // Use the routes after the middleware
 app.use('/auth', authRoutes);
