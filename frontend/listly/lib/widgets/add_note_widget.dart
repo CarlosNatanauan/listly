@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fleather/fleather.dart';
 import 'package:flutter/services.dart';
 import 'package:parchment_delta/parchment_delta.dart';
-import '../services/api_service.dart'; // Import your ApiService
 import '../models/note.dart'; // Import your Note model
 import 'dart:convert';
 import '../providers/notes_provider.dart';
@@ -132,7 +131,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
 
   void _saveOrUpdateNote() async {
     final title = titleController.text.isEmpty
-        ? 'Untitled'
+        ? ''
         : titleController.text; // Ensure there's always a title
     final content = _controller?.document;
 
@@ -153,7 +152,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
           id: isEditingNow
               ? _currentNote!.id
               : '', // Retain the note's ID if editing, otherwise create new note with empty ID
-          title: title.isEmpty ? 'Untitled' : title,
+          title: title.isEmpty ? '' : title,
           content: contentJson.isEmpty ? '[]' : contentJson,
           createdAt: isEditingNow ? _currentNote!.createdAt : DateTime.now(),
         );

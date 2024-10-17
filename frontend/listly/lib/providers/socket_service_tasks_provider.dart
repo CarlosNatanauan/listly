@@ -4,7 +4,6 @@ import '../models/todo.dart'; // Import your ToDo model
 import '../providers/tasks_provider.dart'; // Import tasks provider
 import '../providers/auth_providers.dart'; // Import for token
 
-// Provider for SocketServiceTasks
 final socketServiceTasksProvider = Provider<SocketServiceTasks>((ref) {
   final socketServiceTasks = SocketServiceTasks();
   return socketServiceTasks;

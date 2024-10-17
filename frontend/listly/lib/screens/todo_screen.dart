@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/todo.dart';
-import '../services/auth_service.dart';
 import '../providers/auth_providers.dart';
 import '../widgets/edit_todo_widget.dart';
 import '../providers/fab_visibility_provider.dart';
@@ -25,8 +24,14 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
   Widget build(BuildContext context) {
     final tasks = ref.watch(tasksProvider);
 
+    // Sort tasks by creation date to display the newest first
+    final sortedTasks =
+        List<ToDo>.from(tasks); // Create a copy of the tasks list
+    sortedTasks.sort(
+        (a, b) => b.createdAt.compareTo(a.createdAt)); // Sort by createdAt
+
     // Filter tasks based on the search query, regardless of completion status
-    final filteredTasks = tasks
+    final filteredTasks = sortedTasks
         .where((task) =>
             task.task.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
@@ -37,75 +42,87 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     final completedTasks =
         filteredTasks.where((task) => task.completed).toList();
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 4.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'To-do',
-              style: TextStyle(
-                color: Color(0xFFFF725E),
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
+    return Scaffold(
+      backgroundColor:
+          Color.fromARGB(248, 248, 248, 248), // Set the screen background color
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 16.0, bottom: 4.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'To-do',
+                style: TextStyle(
+                  color: Color(0xFFFF725E),
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
-        ),
-        _buildSearchBar(),
-        Expanded(
-          child: Stack(
-            children: [
-              ListView(
-                children: [
-                  if (notCompletedTasks.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
-                      child:
-                          Text('Not Completed', style: TextStyle(fontSize: 16)),
-                    ),
-                    ...notCompletedTasks
-                        .map((task) => _buildTaskCard(context, task)),
-                  ],
-                  if (completedTasks.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _showCompletedTasks =
-                                !_showCompletedTasks; // Toggle state
-                          });
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Completed', style: TextStyle(fontSize: 16)),
-                            Icon(_showCompletedTasks
-                                ? Icons.arrow_drop_up
-                                : Icons.arrow_drop_down),
-                          ],
-                        ),
+          _buildSearchBar(),
+          Expanded(
+            child: Stack(
+              children: [
+                ListView(
+                  children: [
+                    if (notCompletedTasks.isNotEmpty) ...[
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
+                        child: Text('Not Completed',
+                            style:
+                                TextStyle(fontSize: 16, color: Colors.black54)),
                       ),
-                    ),
-                    if (_showCompletedTasks) ...[
-                      ...completedTasks
+                      ...notCompletedTasks
                           .map((task) => _buildTaskCard(context, task)),
                     ],
+                    if (completedTasks.isNotEmpty) ...[
+                      Padding(
+                        padding:
+                            const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _showCompletedTasks =
+                                  !_showCompletedTasks; // Toggle state
+                            });
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Completed',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.black54)),
+                              Icon(
+                                _showCompletedTasks
+                                    ? Icons.arrow_drop_up
+                                    : Icons.arrow_drop_down,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_showCompletedTasks) ...[
+                        ...completedTasks
+                            .map((task) => _buildTaskCard(context, task)),
+                      ],
+                    ],
                   ],
-                ],
-              ),
-              if (_isEditToDoVisible)
-                EditToDoWidget(
-                  onClose: _toggleEditToDoWidget,
-                  textController: _editToDoTextController,
-                  onSave: _saveEditedToDo,
                 ),
-            ],
+                if (_isEditToDoVisible)
+                  EditToDoWidget(
+                    onClose: _toggleEditToDoWidget,
+                    textController: _editToDoTextController,
+                    onSave: _saveEditedToDo,
+                  ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -128,8 +145,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
           );
         },
         child: Card(
-          color: Colors.white,
-          elevation: 1,
+          color: Colors.white, // Set the card background color to pure white
+          elevation: .5,
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
@@ -138,12 +155,17 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                 Checkbox(
                   value: task.completed,
                   activeColor: Color(0xFFFF725E),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(50), // Make it circular
+                  ),
                   onChanged: (bool? newValue) async {
                     if (newValue != null) {
                       final updatedTask = ToDo(
                         id: task.id,
                         task: task.task,
                         completed: newValue,
+                        createdAt:
+                            task.createdAt, // Pass the existing createdAt value
                       );
                       await _updateTask(updatedTask);
                     }
@@ -173,21 +195,23 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       child: Card(
-        color: Colors.white,
-        elevation: 1,
+        color: Color.fromARGB(238, 243, 243, 243),
+        elevation: .5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 1.0),
           child: TextField(
+            cursorColor: Color(0xFFFF725E),
             controller: _searchController,
             style: TextStyle(fontSize: 14.0),
             decoration: InputDecoration(
               labelText: 'Search Tasks',
-              labelStyle: TextStyle(fontSize: 14.0),
+              labelStyle: TextStyle(fontSize: 14.0, color: Color(0xFFFF725E)),
               border: InputBorder.none,
-              prefixIcon: Icon(Icons.search, size: 20.0, color: Colors.grey),
+              prefixIcon: Icon(Icons.search,
+                  size: 20.0, color: const Color.fromARGB(255, 196, 196, 196)),
             ),
             onChanged: (value) {
               setState(() {
@@ -226,6 +250,8 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         id: _selectedTask!.id,
         task: editedTaskText,
         completed: _selectedTask!.completed,
+        createdAt:
+            _selectedTask!.createdAt, // Pass the existing createdAt value
       );
       final authService = ref.read(authServiceProvider);
       final token = await authService.getToken();

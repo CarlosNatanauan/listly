@@ -1,5 +1,7 @@
+// main_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart'; // Import the Zoom Drawer package
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'notes_screen.dart';
 import 'todo_screen.dart';
@@ -8,32 +10,37 @@ import '../widgets/add_note_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/fab_visibility_provider.dart';
 import '../providers/tasks_provider.dart';
-import '../providers/socket_service_provider.dart'; // Import your socketServiceProvider
-import '../models/note.dart';
+import '../providers/socket_service_provider.dart';
 import '../providers/notes_provider.dart';
 import '../providers/auth_providers.dart'; // Add this import
+import '../dialogs/logout_confirmation_dialog.dart';
 
 class MainPage extends ConsumerStatefulWidget {
-  final String welcomeMessage;
+  final String userName;
 
-  MainPage({required this.welcomeMessage});
+  MainPage({required this.userName});
 
   @override
   _MainPageState createState() => _MainPageState();
 }
 
 class _MainPageState extends ConsumerState<MainPage> {
-  int _selectedIndex = 0;
-  final double _bottomNavBarHeight = 55.0;
-  bool _isAddToDoVisible = false;
-  TextEditingController _toDoTextController = TextEditingController();
-  String? _token; // Variable to store the token
-  bool _isSocketConnected = false; // To track socket connection status
+  int _selectedIndex = 0; // To keep track of the selected tab
+  final double _bottomNavBarHeight =
+      55.0; // Height of the bottom navigation bar
+  bool _isAddToDoVisible = false; // State for the Add ToDo widget visibility
+  TextEditingController _toDoTextController =
+      TextEditingController(); // Controller for ToDo input
+  String? _token; // Authentication token
+  bool _isSocketConnected = false; // Socket connection state
+
+  final _zoomDrawerController =
+      ZoomDrawerController(); // Initialize ZoomDrawerController
 
   @override
   void initState() {
     super.initState();
-    _fetchTokenAndTasks(); // Fetch token and tasks together
+    _fetchTokenAndTasks();
   }
 
   Future<void> _fetchTokenAndTasks() async {
@@ -41,9 +48,9 @@ class _MainPageState extends ConsumerState<MainPage> {
     String? token = await authService.getToken();
 
     if (token != null) {
-      _token = token; // Store the fetched token
-      _initializeSocketConnection(); // Initialize socket after token is fetched
-      _fetchTasks(); // Fetch tasks after token is available
+      _token = token;
+      _initializeSocketConnection();
+      _fetchTasks();
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
@@ -53,10 +60,9 @@ class _MainPageState extends ConsumerState<MainPage> {
     final socketService = ref.read(socketServiceProvider);
     if (_token != null && !_isSocketConnected) {
       socketService.connect(_token!, (updatedNote) {
-        // Whenever a note is updated, fetch the latest notes
         ref.read(notesProvider(_token!).notifier).fetchNotes();
       });
-      _isSocketConnected = true; // Mark the socket as connected
+      _isSocketConnected = true;
     } else {
       print('No valid token, cannot connect to socket.');
     }
@@ -75,9 +81,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   void dispose() {
     _toDoTextController.dispose();
-    ref
-        .read(socketServiceProvider)
-        .disconnect(); // Disconnect socket when page is disposed
+    ref.read(socketServiceProvider).disconnect();
     super.dispose();
   }
 
@@ -136,83 +140,228 @@ class _MainPageState extends ConsumerState<MainPage> {
         SystemNavigator.pop();
         return false;
       },
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: ZoomDrawer(
+        menuBackgroundColor: Color.fromARGB(255, 255, 139, 124),
+        controller: _zoomDrawerController,
+        style: DrawerStyle.defaultStyle, // Change to desired style
+        menuScreen: MenuScreen(
+          onMenuItemTap: (index) {
+            setState(() {
+              _selectedIndex = index; // Update the selected index
+            });
+            _zoomDrawerController.toggle?.call(); // Close the drawer
+          },
+        ),
+        mainScreen: Scaffold(
+          appBar: AppBar(
+            backgroundColor: Color.fromARGB(248, 248, 248, 248),
+            automaticallyImplyLeading: false,
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Hello, ',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Color.fromARGB(255, 97, 93, 93),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${widget.userName}',
+                          style: TextStyle(
+                            fontSize: 22,
+                            color: Color(0xFFFF725E),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.menu),
+                  onPressed: () {
+                    try {
+                      _zoomDrawerController.toggle?.call();
+                    } catch (e) {
+                      print('Error toggling drawer: $e');
+                      _showErrorSnackBar('Error: $e');
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+          body: Stack(
             children: [
-              Expanded(
-                child: Text(
-                  widget.welcomeMessage,
-                  style: TextStyle(fontSize: 20),
-                  overflow: TextOverflow.ellipsis,
+              _selectedIndex == 1
+                  ? tasks.isEmpty
+                      ? Center(child: Text('No tasks available'))
+                      : TodoScreen()
+                  : _token != null
+                      ? NotesScreen(token: _token!)
+                      : Center(
+                          child: Text('Token is not available. Please log in.'),
+                        ),
+              if (_isAddToDoVisible)
+                AddToDoWidget(
+                  onClose: _toggleAddToDoWidget,
+                  textController: _toDoTextController,
+                  onSave: _saveToDo,
                 ),
+            ],
+          ),
+          floatingActionButton: (!_isAddToDoVisible && isFABVisible)
+              ? FloatingActionButton(
+                  onPressed: _handleFABPress,
+                  child: Icon(Icons.add, color: Colors.white),
+                  backgroundColor: Color(0xFFFF725E),
+                  elevation: 5,
+                )
+              : null,
+          bottomNavigationBar: FlashyTabBar(
+            height: _bottomNavBarHeight,
+            selectedIndex: _selectedIndex,
+            showElevation: true,
+            onItemSelected: (index) {
+              setState(() {
+                _selectedIndex = index;
+                if (index != 1) {
+                  _isAddToDoVisible = false;
+                }
+              });
+            },
+            items: [
+              FlashyTabBarItem(
+                icon: Icon(Icons.note),
+                title: Text('Notes'),
+                inactiveColor: Color.fromARGB(255, 255, 218, 213),
+                activeColor: Color(0xFFFF725E),
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.settings,
-                  color: Color(0xFFFF725E),
-                ),
-                onPressed: () {
-                  print('Settings pressed');
-                },
+              FlashyTabBarItem(
+                icon: Icon(Icons.check_circle),
+                title: Text('To-do'),
+                inactiveColor: Color.fromARGB(255, 255, 218, 213),
+                activeColor: Color(0xFFFF725E),
               ),
             ],
           ),
         ),
-        body: Stack(
+        borderRadius: 24.0,
+        showShadow: true,
+        slideWidth: MediaQuery.of(context).size.width * 0.65,
+        openCurve: Curves.fastOutSlowIn, // Adjust the open curve
+        closeCurve: Curves.bounceIn, // Adjust the close curve
+      ),
+    );
+  }
+}
+
+class MenuScreen extends ConsumerWidget {
+  final Function(int) onMenuItemTap; // Callback to handle item taps
+
+  MenuScreen({required this.onMenuItemTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Container(
+      color: Color(0xFFFF725E), // Keep the main background color
+      child: Padding(
+        padding:
+            const EdgeInsets.fromLTRB(5, 30, 8, 5), // Reduce vertical padding
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _selectedIndex == 1
-                ? tasks.isEmpty
-                    ? Center(child: Text('No tasks available'))
-                    : TodoScreen()
-                : _token != null
-                    ? NotesScreen(token: _token!) // Use the stored token
-                    : Center(
-                        child: Text('Token is not available. Please log in.')),
-            if (_isAddToDoVisible)
-              AddToDoWidget(
-                onClose: _toggleAddToDoWidget,
-                textController: _toDoTextController,
-                onSave: _saveToDo,
+            // Close Button
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: 1.0, bottom: 16.0), // Reduce padding
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: IconButton(
+                  onPressed: () {
+                    // Close the drawer
+                    ZoomDrawer.of(context)?.toggle();
+                  },
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 24.0, // Smaller close icon
+                  ),
+                ),
               ),
+            ),
+            // Account ListTile
+            _buildMenuItem(Icons.account_circle, 'Account', 0),
+            // Settings ListTile
+            _buildMenuItem(Icons.settings, 'Settings', 1),
+            // About ListTile
+            _buildMenuItem(Icons.info, 'About', 2),
+            Spacer(), // Push the items to the top
+            // Logout ListTile
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  vertical: 8.0, horizontal: 8.0), // Consistent padding
+              child: Material(
+                elevation: 4, // Slightly reduced elevation
+                borderRadius:
+                    BorderRadius.circular(10), // Smaller rounded corners
+                color: Color.fromARGB(255, 245, 86,
+                    65), // Keep the same color for the logout item
+                child: ListTile(
+                  leading: Icon(Icons.exit_to_app,
+                      color: Colors.white, size: 24), // Icon for logout
+                  title: Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight:
+                          FontWeight.w500, // Slightly lighter text weight
+                      fontSize: 16, // Smaller font size
+                    ),
+                  ),
+                  onTap: () {
+                    // Show logout confirmation dialog
+                    showLogoutConfirmationDialog(
+                        context, ref); // Pass the WidgetRef to the dialog
+                  },
+                ),
+              ),
+            ),
           ],
         ),
-        floatingActionButton: (!_isAddToDoVisible && isFABVisible)
-            ? FloatingActionButton(
-                onPressed: _handleFABPress,
-                child: Icon(Icons.add, color: Colors.white),
-                backgroundColor: Color(0xFFFF725E),
-                elevation: 5,
-              )
-            : null,
-        bottomNavigationBar: FlashyTabBar(
-          height: _bottomNavBarHeight,
-          selectedIndex: _selectedIndex,
-          showElevation: true,
-          onItemSelected: (index) {
-            setState(() {
-              _selectedIndex = index;
-              if (index != 1) {
-                _isAddToDoVisible = false;
-              }
-            });
+      ),
+    );
+  }
+
+  // Helper method to create a menu item
+  Widget _buildMenuItem(IconData icon, String title, int index) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          vertical: 8.0, horizontal: 8.0), // Reduce padding
+      child: Material(
+        elevation: 4, // Slightly reduced elevation
+        borderRadius: BorderRadius.circular(10), // Smaller rounded corners
+        color: Color(0xFFFF725E), // Keep the same color for each item
+        child: ListTile(
+          leading:
+              Icon(icon, color: Colors.white, size: 24), // Smaller icon size
+          title: Text(
+            title,
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w500, // Slightly lighter text weight
+              fontSize: 16, // Smaller font size
+            ),
+          ),
+          onTap: () {
+            print(
+                '$title button clicked'); // Print statement for each button clicked
+            onMenuItemTap(index); // Trigger the tap callback
           },
-          items: [
-            FlashyTabBarItem(
-              icon: Icon(Icons.note),
-              title: Text('Notes'),
-              inactiveColor: Color.fromARGB(255, 255, 218, 213),
-              activeColor: Color(0xFFFF725E),
-            ),
-            FlashyTabBarItem(
-              icon: Icon(Icons.check_circle),
-              title: Text('To-do'),
-              inactiveColor: Color.fromARGB(255, 255, 218, 213),
-              activeColor: Color(0xFFFF725E),
-            ),
-          ],
         ),
       ),
     );

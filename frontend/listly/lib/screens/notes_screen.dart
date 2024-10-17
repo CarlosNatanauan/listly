@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/notes_provider.dart';
-import '../models/note.dart';
 import '../widgets/add_note_widget.dart';
 import 'dart:convert';
 import '../providers/socket_service_provider.dart'; // Import the SocketService provider
@@ -24,6 +23,8 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     final notesAsyncValue = ref.watch(notesProvider(widget.token));
 
     return Scaffold(
+      backgroundColor:
+          Color.fromARGB(248, 248, 248, 248), // Set the screen background color
       body: Column(
         children: [
           Padding(
@@ -96,8 +97,9 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                             minHeight: 100,
                           ),
                           child: Card(
-                            color: Colors.white,
-                            elevation: 1,
+                            color: Colors
+                                .white, // Set the card background color to pure white
+                            elevation: .5,
                             margin: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 16),
                             child: Padding(
@@ -195,20 +197,24 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       child: Card(
-        color: Colors.white,
-        elevation: 1,
+        color: Color.fromARGB(
+            238, 243, 243, 243), // Set the search bar background to pure white
+        elevation: .5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 1.0),
           child: TextField(
+            cursorColor: Color(0xFFFF725E),
             style: TextStyle(fontSize: 14.0),
             decoration: InputDecoration(
               labelText: 'Search Notes',
-              labelStyle: TextStyle(fontSize: 14.0),
+              focusColor: Colors.black,
+              labelStyle: TextStyle(fontSize: 14.0, color: Color(0xFFFF725E)),
               border: InputBorder.none,
-              prefixIcon: Icon(Icons.search, size: 20.0, color: Colors.grey),
+              prefixIcon: Icon(Icons.search,
+                  size: 20.0, color: Color.fromARGB(255, 196, 196, 196)),
             ),
             onChanged: (value) {
               setState(() {

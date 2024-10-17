@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../services/auth_service.dart';
 import '../main_page.dart';
-import 'register_screen.dart';
 import '../../providers/auth_providers.dart'; // Import the providers
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -35,8 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.read(userProvider.notifier).state = user; // Update user state
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) =>
-              MainPage(welcomeMessage: 'Welcome back, ${user.username}!'),
+          builder: (context) => MainPage(userName: '${user.username}!'),
         ),
       );
     } else {
