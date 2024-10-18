@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main_page.dart';
 import '../../providers/auth_providers.dart'; // Import the providers
+import '../../change_password/forgot_password.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   @override
@@ -51,7 +52,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0, // Remove the AppBar shadow if desired
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -68,16 +68,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 30.0), // Padding similar to OnboardingScreen
+              horizontal: 16.0,
+              vertical: 30.0,
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Image at the top
                 Image.asset(
-                  'assets/images/login_image.png', // Replace with your image asset
-                  width: screenWidth * 0.6, // Responsive width
-                  height: screenHeight * 0.32, // Responsive height
+                  'assets/images/login_image.png',
+                  width: screenWidth * 0.6,
+                  height: screenHeight * 0.22,
                   fit: BoxFit.cover,
                 ),
                 SizedBox(height: 30), // Space between image and text
@@ -85,9 +86,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Text(
                   'Login',
                   style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black54),
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54,
+                  ),
                 ),
                 SizedBox(height: 10), // Space between texts
                 // Username TextField
@@ -96,19 +98,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Username',
                     border: OutlineInputBorder(
-                      // Add border style
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     contentPadding: EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 16.0), // Padding inside TextField
+                      vertical: 12.0,
+                      horizontal: 16.0,
+                    ),
                   ),
                 ),
                 SizedBox(height: 10), // Space between text fields
@@ -118,15 +118,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(
-                      // Add border style
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -143,15 +140,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       },
                     ),
                     contentPadding: EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 16.0), // Padding inside TextField
+                      vertical: 12.0,
+                      horizontal: 16.0,
+                    ),
                   ),
                   obscureText: !_isPasswordVisible, // Show/hide password
                 ),
-                SizedBox(height: 20), // Space before button
+                // Forgot Password Text Button
+                Align(
+                  alignment: Alignment.centerRight, // Align to the right
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen(),
+                        ),
+                      );
+                      // Print statement
+                    },
+                    child: Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                        color: Color(0xFFFF725E),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
                 if (_isLoading)
                   CircularProgressIndicator(), // Loading indicator
-                SizedBox(height: 20), // Space before button
+                SizedBox(height: 10), // Space before button
                 // Login button
                 SizedBox(
                   width: screenWidth * 0.8, // Set width based on screen width
@@ -161,7 +179,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       backgroundColor: Color(0xFFFF725E), // Custom color
                       foregroundColor: Colors.white, // Text color
                       padding: EdgeInsets.symmetric(
-                          vertical: 13.0), // Same vertical padding
+                        vertical: 13.0,
+                      ), // Same vertical padding
                       shape: RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.circular(15), // Rounded edges
