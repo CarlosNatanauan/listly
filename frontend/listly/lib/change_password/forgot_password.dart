@@ -1,12 +1,100 @@
 import 'package:flutter/material.dart';
 import './otp_request.dart';
+import '../services/api_service.dart';
+import '../dialogs/loading_dialog.dart'; // Import the loading dialog
 
-class ForgotPasswordScreen extends StatelessWidget {
+class ForgotPasswordScreen extends StatefulWidget {
+  @override
+  _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
+}
+
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  String _validationMessage = ''; // To hold validation messages
+  bool _isValidEmail = false; // Track if the email is valid
 
-  void _resetPassword(BuildContext context) {
+  Future<void> _resetPassword(BuildContext context) async {
     final email = _emailController.text.trim();
     print('Reset password for email: $email'); // For debugging
+
+    // Show loading dialog with a more professional message
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return LoadingDialog(message: 'Sending OTP...');
+      },
+    );
+
+    try {
+      // Call the API to request OTP
+      final response = await ApiService.requestOtp(email);
+
+      // Close the loading dialog after API call
+      Navigator.of(context).pop(); // Close the loading dialog
+
+      // If successful, navigate to OTPRequestScreen
+      if (response['message'] == 'OTP sent') {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => OTPRequestScreen(email: email),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if an error occurs
+      Navigator.of(context).pop();
+
+      // Handle errors
+      String errorMessage = e.toString();
+      if (errorMessage.contains('User not found')) {
+        _showDialog(context, 'Email Not Found',
+            'No account is associated with this email. Please check your email and try again.');
+      } else if (errorMessage.contains('daily OTP request limit')) {
+        _showDialog(context, 'Request Limit Exceeded',
+            'You have reached the maximum number of OTP requests for today. Please try again tomorrow.');
+      } else {
+        _showDialog(context, 'Error',
+            'An unexpected error occurred. Please try again later.');
+      }
+    }
+  }
+
+  void _showDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title, style: TextStyle(color: Color(0xFFFF725E))),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK', style: TextStyle(color: Color(0xFFFF725E))),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _validateEmail(String value) {
+    // Simple email validation using regex
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+
+    setState(() {
+      if (value.isEmpty) {
+        _validationMessage = ''; // No message for empty input
+        _isValidEmail = false;
+      } else if (!emailRegex.hasMatch(value)) {
+        _validationMessage = 'Please make sure the email address is valid';
+        _isValidEmail = false;
+      } else {
+        _validationMessage = 'Email is valid';
+        _isValidEmail = true;
+      }
+    });
   }
 
   @override
@@ -27,19 +115,16 @@ class ForgotPasswordScreen extends StatelessWidget {
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Center align the items
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: screenHeight * 0.05), // Adjust the top spacing
-                // Image at the center
+                SizedBox(height: screenHeight * 0.05),
                 Image.asset(
                   'assets/images/forgot_password.png', // Replace with your image asset
-                  width: screenWidth * 0.5, // Responsive width
-                  height: screenHeight * 0.25, // Responsive height
+                  width: screenWidth * 0.5,
+                  height: screenHeight * 0.25,
                   fit: BoxFit.cover,
                 ),
-                SizedBox(height: 30), // Space between image and text
-                // Big Forgot Password Text
+                SizedBox(height: 30),
                 Text(
                   'Forgot Password?',
                   style: TextStyle(
@@ -47,22 +132,22 @@ class ForgotPasswordScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: Colors.black54,
                   ),
-                  textAlign: TextAlign.center, // Center the text
+                  textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 10), // Space between texts
-                // Small Instruction Text
+                SizedBox(height: 10),
                 Text(
                   "No worries, we'll send you reset instructions.",
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.black54,
                   ),
-                  textAlign: TextAlign.center, // Center the text
+                  textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 20), // Space before email TextField
+                SizedBox(height: 20),
                 // Email TextField
                 TextField(
                   controller: _emailController,
+                  onChanged: _validateEmail, // Validate email on change
                   decoration: InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(
@@ -81,34 +166,41 @@ class ForgotPasswordScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 5), // Space between text field and message
+                // Validation message
+                Text(
+                  _validationMessage,
+                  style: TextStyle(
+                    color: _isValidEmail ? Colors.green : Colors.red,
+                  ),
+                ),
                 SizedBox(height: 20), // Space before Reset button
                 // Reset Password button
                 SizedBox(
-                  width: screenWidth * 0.8, // Set width based on screen width
+                  width: screenWidth * 0.8,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => OTPRequestScreen(
-                              email: _emailController.text.trim()),
-                        ),
-                      );
-                    }, // Call reset password method
+                    onPressed: _isValidEmail
+                        ? () {
+                            _resetPassword(
+                                context); // Call reset password method
+                          }
+                        : null, // Disable button if email is invalid
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF725E), // Custom color
-                      foregroundColor: Colors.white, // Text color
+                      backgroundColor: _isValidEmail
+                          ? Color(0xFFFF725E)
+                          : Colors.grey, // Change color based on validity
+                      foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
                         vertical: 13.0,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded edges
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      elevation: 5, // Shadow effect
+                      elevation: 5,
                     ),
                     child: Text(
                       'Reset Password',
-                      style: TextStyle(fontSize: 20), // Consistent text size
+                      style: TextStyle(fontSize: 20),
                     ),
                   ),
                 ),
@@ -119,12 +211,10 @@ class ForgotPasswordScreen extends StatelessWidget {
                     Navigator.of(context).pop(); // Go back to login
                   },
                   child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Center the row
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.arrow_back,
-                          color: Color(0xFFFF725E)), // Back arrow icon
-                      SizedBox(width: 5), // Space between icon and text
+                      Icon(Icons.arrow_back, color: Color(0xFFFF725E)),
+                      SizedBox(width: 5),
                       Text(
                         'Back to Log in',
                         style: TextStyle(

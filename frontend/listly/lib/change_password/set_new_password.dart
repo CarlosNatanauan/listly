@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../dialogs/loading_dialog.dart';
+import '../screens/auth/login_screen.dart';
 
 class SetNewPasswordScreen extends StatefulWidget {
+  final String email;
+
+  SetNewPasswordScreen({required this.email});
+
   @override
   _SetNewPasswordScreenState createState() => _SetNewPasswordScreenState();
 }
@@ -11,6 +18,8 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       TextEditingController();
   bool _isButtonEnabled = false;
   String? _errorText;
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
 
   @override
   void initState() {
@@ -21,27 +30,121 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
   void _validatePasswords() {
     setState(() {
-      // Check if passwords match
       if (_passwordController.text.isNotEmpty &&
           _confirmPasswordController.text.isNotEmpty) {
         if (_passwordController.text == _confirmPasswordController.text) {
-          _isButtonEnabled = true; // Enable button if passwords match
-          _errorText = null; // Clear error text
+          _isButtonEnabled = true;
+          _errorText = null;
         } else {
-          _isButtonEnabled = false; // Disable button if passwords do not match
-          _errorText = 'Passwords do not match'; // Set error text
+          _isButtonEnabled = false;
+          _errorText = 'Passwords do not match';
         }
       } else {
-        _isButtonEnabled = false; // Disable button if fields are empty
-        _errorText = null; // Clear error text
+        _isButtonEnabled = false;
+        _errorText = null;
       }
     });
   }
 
-  void _resetPassword() {
+  Future<void> _resetPassword() async {
     final password = _passwordController.text;
-    print('Password reset to: $password'); // For debugging
-    // Add logic for password reset here
+    print("Attempting to reset password for email: ${widget.email}");
+
+    showDialog(
+      context: context,
+      builder: (context) => LoadingDialog(message: "Changing password..."),
+    );
+
+    try {
+      print("Calling API with email: ${widget.email} and password: $password");
+      await ApiService.changePassword(widget.email, password);
+      Navigator.of(context).pop(); // Dismiss loading dialog
+      _showSuccessDialog("Password changed successfully!");
+    } catch (e) {
+      Navigator.of(context).pop(); // Dismiss loading dialog
+      print("Error occurred: $e"); // Print the error for debugging
+
+      // Check if the error message matches the backend response
+      if (e
+          .toString()
+          .contains("You can only change your password once every 24 hours.")) {
+        _showErrorDialog(
+            "Error", "You can only change your password once every 24 hours.");
+      } else {
+        _showErrorDialog("Error", e.toString());
+      }
+    }
+  }
+
+  Future<void> _showSuccessDialog(String message) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Success"),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the success dialog
+              Navigator.of(context).pop(); // Go back to the previous screen
+
+              // Navigate to the login screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showErrorDialog(String title, String content) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dismiss the error dialog
+              // Navigate to the login screen
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> _onBackPressed() async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Leave Password Change?"),
+            content: Text(
+                "Are you sure you want to leave this session? Your progress might be lost."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // Dismiss
+                child: Text("No"),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true); // Confirm and pop dialog
+                  Navigator.of(context).pop(); // Go back to the previous screen
+                },
+                child: Text("Yes"),
+              ),
+            ],
+          ),
+        ) ??
+        false; // Default to false if dialog is dismissed
   }
 
   @override
@@ -53,79 +156,82 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width and height
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () {
-          FocusScope.of(context)
-              .unfocus(); // Dismiss the keyboard when tapping outside
-        },
-        child: SingleChildScrollView(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: 60),
-                // Encapsulated password input section
-                PasswordInputSection(
-                  passwordController: _passwordController,
-                  confirmPasswordController: _confirmPasswordController,
-                  errorText: _errorText,
-                  isButtonEnabled: _isButtonEnabled,
-                  onPasswordChange: _validatePasswords,
-                ),
-                SizedBox(height: 20), // Space before Reset Password button
-                // Reset Password button
-                SizedBox(
-                  width: screenWidth * 0.8, // Set width based on screen width
-                  child: ElevatedButton(
-                    onPressed: _isButtonEnabled ? _resetPassword : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF725E), // Custom color
-                      foregroundColor: Colors.white, // Text color
-                      padding: EdgeInsets.symmetric(vertical: 13.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded edges
-                      ),
-                      elevation: 5, // Shadow effect
-                    ),
-                    child: Text(
-                      'Reset Password',
-                      style: TextStyle(fontSize: 20), // Consistent text size
-                    ),
+    return WillPopScope(
+      onWillPop: _onBackPressed,
+      child: Scaffold(
+        body: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+          },
+          child: SingleChildScrollView(
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 40.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: 60),
+                  PasswordInputSection(
+                    passwordController: _passwordController,
+                    confirmPasswordController: _confirmPasswordController,
+                    errorText: _errorText,
+                    isButtonEnabled: _isButtonEnabled,
+                    onPasswordChange: _validatePasswords,
+                    isPasswordVisible: _isPasswordVisible,
+                    isConfirmPasswordVisible: _isConfirmPasswordVisible,
+                    togglePasswordVisibility: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                    toggleConfirmPasswordVisibility: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
                   ),
-                ),
-                SizedBox(height: 20), // Space before back to login text
-                // Back to Login clickable text
-                TextButton(
-                  onPressed: () {
-                    print('Back to login clicked');
-                    Navigator.of(context)
-                        .pop(); // Navigate back to the login screen
-                  },
-                  child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center, // Center the row
-                    children: [
-                      Icon(Icons.arrow_back,
-                          color: Color(0xFFFF725E)), // Back arrow icon
-                      SizedBox(width: 5), // Space between icon and text
-                      Text(
-                        'Back to Log in',
-                        style: TextStyle(
-                          color: Color(0xFFFF725E),
-                          fontSize: 14,
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: screenWidth * 0.8,
+                    child: ElevatedButton(
+                      onPressed: _isButtonEnabled ? _resetPassword : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFFF725E),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 13.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
                         ),
+                        elevation: 5,
                       ),
-                    ],
+                      child: Text(
+                        'Reset Password',
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: 20),
+                  TextButton(
+                    onPressed: _onBackPressed,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.arrow_back, color: Color(0xFFFF725E)),
+                        SizedBox(width: 5),
+                        Text(
+                          'Back to Log in',
+                          style: TextStyle(
+                            color: Color(0xFFFF725E),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -140,6 +246,10 @@ class PasswordInputSection extends StatelessWidget {
   final String? errorText;
   final bool isButtonEnabled;
   final VoidCallback onPasswordChange;
+  final bool isPasswordVisible;
+  final bool isConfirmPasswordVisible;
+  final VoidCallback togglePasswordVisibility;
+  final VoidCallback toggleConfirmPasswordVisibility;
 
   const PasswordInputSection({
     Key? key,
@@ -148,74 +258,55 @@ class PasswordInputSection extends StatelessWidget {
     required this.errorText,
     required this.isButtonEnabled,
     required this.onPasswordChange,
+    required this.isPasswordVisible,
+    required this.isConfirmPasswordVisible,
+    required this.togglePasswordVisibility,
+    required this.toggleConfirmPasswordVisibility,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width
     final screenWidth = MediaQuery.of(context).size.width;
-
     final screenHeight = MediaQuery.of(context).size.height;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center, // Center align
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Image at the center
         Image.asset(
-          'assets/images/set_new_password.png', // Image asset
-          width: screenWidth * 0.5, // Responsive width
-          height: screenHeight * 0.25, // Responsive height
+          'assets/images/set_new_password.png',
+          width: screenWidth * 0.5,
+          height: screenHeight * 0.25,
           fit: BoxFit.fill,
         ),
-        SizedBox(height: 30), // Space between image and text
-        // Password requirement text
-        Text(
-          'Must be 8 characters long',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.black54,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        SizedBox(height: 20), // Space before password fields
-        // Password input field
+        SizedBox(height: 20),
         TextField(
           controller: passwordController,
+          obscureText: !isPasswordVisible,
           decoration: InputDecoration(
-            labelText: 'Password',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
+            labelText: "New Password",
+            suffixIcon: IconButton(
+              icon: Icon(
+                  isPasswordVisible ? Icons.visibility : Icons.visibility_off),
+              onPressed: togglePasswordVisibility,
             ),
           ),
-          obscureText: true, // Hide password input
-          onChanged: (_) =>
-              onPasswordChange(), // Call the validation function on change
+          onChanged: (_) => onPasswordChange(),
         ),
-        SizedBox(height: 20), // Space before confirm password field
-        // Confirm Password input field
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: confirmPasswordController,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              obscureText: true, // Hide password input
-              onChanged: (_) =>
-                  onPasswordChange(), // Call the validation function on change
+        SizedBox(height: 10),
+        TextField(
+          controller: confirmPasswordController,
+          obscureText: !isConfirmPasswordVisible,
+          decoration: InputDecoration(
+            labelText: "Confirm Password",
+            errorText: errorText,
+            suffixIcon: IconButton(
+              icon: Icon(isConfirmPasswordVisible
+                  ? Icons.visibility
+                  : Icons.visibility_off),
+              onPressed: toggleConfirmPasswordVisibility,
             ),
-            if (errorText != null) // Show error text if passwords don't match
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  errorText!,
-                  style: TextStyle(color: Colors.red), // Error text style
-                ),
-              ),
-          ],
+          ),
+          onChanged: (_) => onPasswordChange(),
         ),
       ],
     );

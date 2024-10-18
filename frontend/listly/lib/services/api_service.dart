@@ -191,4 +191,58 @@ class ApiService {
       throw Exception('Failed to delete note');
     }
   }
+
+  //changing password
+
+  // Method to request OTP
+  static Future<dynamic> requestOtp(String email) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/auth/request-reset'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({'email': email}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      // Handle errors based on the response
+      final error = jsonDecode(response.body);
+      throw Exception(error['message']);
+    }
+  }
+
+  // Method to verify OTP
+  static Future<dynamic> verifyOtp(String email, String otp) async {
+    final response = await http.post(
+      Uri.parse(
+          '$_baseUrl/auth/verify-otp'), // Replace with your actual endpoint
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({'email': email, 'otp': otp}),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      // Handle errors based on the response
+      final error = jsonDecode(response.body);
+      throw Exception(error['message']);
+    }
+  }
+
+  static Future<void> changePassword(String email, String newPassword) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/auth/change-password'), // Make sure this is correct
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'email': email,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to change password: ${response.body}');
+    }
+  }
 }

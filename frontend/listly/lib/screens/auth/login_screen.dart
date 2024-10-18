@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main_page.dart';
 import '../../providers/auth_providers.dart'; // Import the providers
 import '../../change_password/forgot_password.dart';
+import '../onboarding_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   @override
@@ -55,7 +56,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop(); // Navigate back to the previous screen
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => OnboardingScreen()),
+            ); // Redirect to OnboardingScreen
           },
         ),
         title: null, // Remove the title from the AppBar
