@@ -91,7 +91,7 @@ router.get('/user', authenticateJWT, async (req, res) => {
     // Check if the user has made a request today
     if (user.otpRequestDate && user.otpRequestDate.getTime() >= todayMidnight) {
       // User has already made a request today, check the count
-      if (user.otpRequestCount >= 5) {
+      if (user.otpRequestCount >= 10) {
         return res.status(429).json({ message: 'You have reached the daily OTP request limit.' });
       } else {
         // Increment the count
@@ -107,7 +107,7 @@ router.get('/user', authenticateJWT, async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
 
     // Set OTP expiration (10 minutes from now)
-    const otpExpiration = Date.now() + 10 * 60 * 1000;
+    const otpExpiration = Date.now() + 1 * 60 * 1000;
 
     // Update user with OTP and expiration
     user.otp = otp;
