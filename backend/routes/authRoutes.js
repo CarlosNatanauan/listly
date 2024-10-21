@@ -19,6 +19,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
+// Export the route and take io as a parameter
+module.exports = function (io) {
+
 // User Registration
 router.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
@@ -159,6 +163,8 @@ router.post('/verify-otp', async (req, res) => {
   res.status(200).json({ message: 'OTP verified' });
 });
 
+
+
 // Change Password --------------------
 router.post('/change-password', async (req, res) => {
   const { email, newPassword } = req.body;
@@ -190,8 +196,16 @@ router.post('/change-password', async (req, res) => {
 
   await user.save();
 
+  // Emit a socket event after password change
+  io.emit('passwordChanged', { userId: user._id }); // Emit userId directly from the backend
+  // Log the emission in the backend
+  console.log(`Socket event 'passwordChanged' emitted for user: ${user.email}`);
+
   res.status(200).json({ message: 'Password changed successfully' });
 });
+
+
+
 
 // Expire OTP on Exit --------------------
 router.post('/expire-otp', async (req, res) => {
@@ -210,4 +224,5 @@ router.post('/expire-otp', async (req, res) => {
   res.status(200).json({ message: 'OTP expired' });
 });
 
-module.exports = router;
+return router;
+};
