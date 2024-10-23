@@ -43,27 +43,34 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   void initState() {
     super.initState();
-    _fetchTokenAndTasks();
+    _fetchTokenAndData(); // Fetch token and notes/tasks
     _startTokenValidationTimer(); // Start periodic token validation
   }
 
-  Future<void> _fetchTokenAndTasks() async {
+  Future<void> _fetchTokenAndData() async {
     final authService = ref.read(authServiceProvider);
     String? token = await authService.getToken();
 
     if (token != null) {
       _token = token;
 
-      // Reinitialize both sockets for notes and tasks with fresh token
-      ref
-          .read(socketServiceProvider)
-          .disconnect(); // Ensure notes socket is disconnected
-      ref
-          .read(socketServiceTasksProvider)
-          .disconnect(); // Ensure tasks socket is disconnected
+      print("Token is set: $_token");
 
-      _initializeSocketConnection(); // Reconnect sockets for both tasks and notes
-      _fetchTasks(); // Fetch tasks as normal
+      // Reinitialize both sockets for notes and tasks with fresh token
+      ref.read(socketServiceProvider).disconnect();
+      ref.read(socketServiceTasksProvider).disconnect();
+
+      _isSocketConnected = false;
+      _initializeSocketConnection();
+      _fetchTasks(); // Fetch tasks
+
+      // Fetch notes right after obtaining the token
+      ref.read(notesProvider(_token!).notifier).fetchNotes();
+
+      // **Force UI to update Notes after login**
+      setState(() {
+        _selectedIndex = 0; // Automatically load the Notes screen
+      });
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
@@ -94,9 +101,11 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   void _initializeSocketConnection() {
     final socketService = ref.read(socketServiceProvider);
-    if (_token != null && !_isSocketConnected) {
+    if (_token != null) {
       socketService.connect(_token!, (updatedNote) {
-        ref.read(notesProvider(_token!).notifier).fetchNotes();
+        ref
+            .read(notesProvider(_token!).notifier)
+            .fetchNotes(); // Ensure refetching notes on update
       });
       _isSocketConnected = true;
     } else {
@@ -237,15 +246,17 @@ class _MainPageState extends ConsumerState<MainPage> {
           ),
           body: Stack(
             children: [
+              // Notes and Tasks conditional loading
               _selectedIndex == 1
                   ? tasks.isEmpty
                       ? Center(child: Text('No tasks available'))
                       : TodoScreen()
-                  : _token != null
+                  : _token != null && _token!.isNotEmpty
                       ? NotesScreen(token: _token!)
                       : Center(
-                          child: Text('Token is not available. Please log in.'),
-                        ),
+                          child: CircularProgressIndicator(),
+                        ), // Show loader until token is available
+
               if (_isAddToDoVisible)
                 AddToDoWidget(
                   onClose: _toggleAddToDoWidget,

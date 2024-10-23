@@ -19,6 +19,14 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure the notes are fetched when the screen is first loaded
+    Future.microtask(
+        () => ref.read(notesProvider(widget.token).notifier).fetchNotes());
+  }
+
+  @override
   Widget build(BuildContext context) {
     final notesAsyncValue = ref.watch(notesProvider(widget.token));
 
@@ -93,9 +101,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                         },
                         child: Container(
                           width: double.infinity,
-                          constraints: BoxConstraints(
-                            minHeight: 100,
-                          ),
+                          constraints: BoxConstraints(minHeight: 100),
                           child: Card(
                             color: Colors
                                 .white, // Set the card background color to pure white

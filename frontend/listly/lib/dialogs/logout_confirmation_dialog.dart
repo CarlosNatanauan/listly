@@ -42,6 +42,8 @@ Future<void> showLogoutConfirmationDialog(
                   .read(socketServiceProvider)
                   .disconnect(); // Disconnect notes socket
 
+              ref.read(socketServiceTasksProvider).disconnect();
+
               // Directly navigate to SplashScreen
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(

@@ -1,14 +1,23 @@
 //notes_provider.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
+import '../services/socket_service_notes.dart';
 import '../models/note.dart';
+import '../providers/socket_service_provider.dart';
 
 // Define a StateNotifier to manage the notes state
 class NotesNotifier extends StateNotifier<AsyncValue<List<Note>>> {
   final String token;
+  final SocketService socketService; // Add socket service
 
-  NotesNotifier(this.token) : super(AsyncLoading()) {
+  NotesNotifier(this.token, this.socketService) : super(AsyncLoading()) {
     fetchNotes(); // Load notes when the notifier is created
+
+    // Connect to the Notes socket service for real-time updates
+    socketService.connect(token, (updatedNote) {
+      // Handle real-time updates for notes
+      fetchNotes(); // Refetch notes when an update is received via socket
+    });
   }
 
   Future<void> fetchNotes() async {
@@ -51,6 +60,10 @@ class NotesNotifier extends StateNotifier<AsyncValue<List<Note>>> {
 // Create a provider for the NotesNotifier
 final notesProvider =
     StateNotifierProvider.family<NotesNotifier, AsyncValue<List<Note>>, String>(
-        (ref, token) {
-  return NotesNotifier(token);
-});
+  (ref, token) {
+    final socketService =
+        ref.watch(socketServiceProvider); // Get the socket service
+    return NotesNotifier(
+        token, socketService); // Pass the socket service to NotesNotifier
+  },
+);
