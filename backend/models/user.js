@@ -12,7 +12,8 @@ const userSchema = new mongoose.Schema({
   otpExpiration: { type: Date }, // OTP expiration time (e.g., 10 minutes)
   otpRequestCount: { type: Number, default: 0 }, // Number of OTP requests in a day
   otpRequestDate: { type: Date }, // Last OTP request date to enforce daily limits
-  lastPasswordChange: { type: Date } // To track the last password change for limiting password resets
+  lastPasswordChange: { type: Date }, // To track the last password change for limiting password resets
+  passwordChangedAt: { type: Date }, // New field to track the last password change
 });
 
 module.exports = mongoose.model('User', userSchema);

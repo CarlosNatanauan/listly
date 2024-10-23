@@ -34,13 +34,14 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('noteUpdated', note);
   });
 
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
 });
 
-// Import routes after the app initialization
-const authRoutes = require('./routes/authRoutes');
+// Pass io to the routes
+const authRoutes = require('./routes/authRoutes')(); // Removed IO from auth
 const noteRoutes = require('./routes/noteRoutes')(io); // Pass io to the note routes
 const taskRoutes = require('./routes/taskRoutes')(io); // Pass io to the task routes
 
