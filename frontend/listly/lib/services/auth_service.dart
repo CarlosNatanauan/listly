@@ -1,7 +1,7 @@
-//auth_service.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import 'api_service.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class AuthService {
   User? _currentUser;
@@ -49,6 +49,34 @@ class AuthService {
         }
       }
       throw Exception('Registration failed. Please try again.');
+    }
+  }
+
+  Future<bool> isTokenValid(String token) async {
+    try {
+      final data = await ApiService.getPasswordChangedAt(token);
+      if (data == null || data['passwordChangedAt'] == null) {
+        // If passwordChangedAt is null, assume token is valid (password hasn't been changed)
+        return true;
+      }
+
+      final passwordChangedAtServer = DateTime.parse(data['passwordChangedAt']);
+
+      // Decode the token to extract all claims
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+      // Extract the issued-at (iat) time from the token
+      final tokenIssuedAt = decodedToken['iat'];
+
+      // Convert the issued-at time to DateTime
+      final tokenIssuedAtDateTime =
+          DateTime.fromMillisecondsSinceEpoch(tokenIssuedAt * 1000);
+
+      // If token was issued before the password was changed, return false
+      return tokenIssuedAtDateTime.isAfter(passwordChangedAtServer);
+    } catch (e) {
+      print('Token validation error: $e');
+      return false;
     }
   }
 

@@ -7,6 +7,22 @@ import '../models/note.dart'; // Import your ToDo model
 class ApiService {
   static const String _baseUrl = 'http://192.168.0.111:5000'; // Backend API URL
 
+  // New method to get the passwordChangedAt timestamp
+  static Future<dynamic> getPasswordChangedAt(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/auth/password-changed-at'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch passwordChangedAt');
+    }
+  }
+
   static Future<dynamic> login(String username, String password) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/login'),

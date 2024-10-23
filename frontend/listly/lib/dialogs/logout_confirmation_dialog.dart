@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_providers.dart'; // Import for logout
 import '../providers/socket_service_provider.dart'; // Import socket service
-import '../screens/onboarding_screen.dart';
+
+import '../providers/socket_service_tasks_provider.dart'; // Import socket service
+import '../screens/splash_screen.dart';
 
 Future<void> showLogoutConfirmationDialog(
     BuildContext context, WidgetRef ref) async {
@@ -35,15 +37,17 @@ Future<void> showLogoutConfirmationDialog(
               ref
                   .read(authServiceProvider)
                   .logout(); // Call the logout function
+
               ref
                   .read(socketServiceProvider)
-                  .disconnect(); // Disconnect the socket
-              // Directly navigate to OnboardingScreen
+                  .disconnect(); // Disconnect notes socket
+
+              // Directly navigate to SplashScreen
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
-                  builder: (context) => OnboardingScreen(),
+                  builder: (context) => SplashScreen(),
                 ),
-              ); // Redirect to OnboardingScreen
+              );
             },
           ),
         ],

@@ -1,7 +1,7 @@
-// main_page.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart'; // Import the Zoom Drawer package
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
 import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'notes_screen.dart';
 import 'todo_screen.dart';
@@ -11,9 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/fab_visibility_provider.dart';
 import '../providers/tasks_provider.dart';
 import '../providers/socket_service_provider.dart';
+import '../providers/socket_service_tasks_provider.dart';
 import '../providers/notes_provider.dart';
 import '../providers/auth_providers.dart'; // Add this import
 import '../dialogs/logout_confirmation_dialog.dart';
+import 'session_expired_screen.dart'; // Import for session expiration redirection
 
 class MainPage extends ConsumerStatefulWidget {
   final String userName;
@@ -33,6 +35,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       TextEditingController(); // Controller for ToDo input
   String? _token; // Authentication token
   bool _isSocketConnected = false; // Socket connection state
+  Timer? _tokenValidationTimer; // Timer to periodically check token validity
 
   final _zoomDrawerController =
       ZoomDrawerController(); // Initialize ZoomDrawerController
@@ -41,6 +44,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   void initState() {
     super.initState();
     _fetchTokenAndTasks();
+    _startTokenValidationTimer(); // Start periodic token validation
   }
 
   Future<void> _fetchTokenAndTasks() async {
@@ -49,11 +53,43 @@ class _MainPageState extends ConsumerState<MainPage> {
 
     if (token != null) {
       _token = token;
-      _initializeSocketConnection();
-      _fetchTasks();
+
+      // Reinitialize both sockets for notes and tasks with fresh token
+      ref
+          .read(socketServiceProvider)
+          .disconnect(); // Ensure notes socket is disconnected
+      ref
+          .read(socketServiceTasksProvider)
+          .disconnect(); // Ensure tasks socket is disconnected
+
+      _initializeSocketConnection(); // Reconnect sockets for both tasks and notes
+      _fetchTasks(); // Fetch tasks as normal
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
+  }
+
+  // Method to start a timer that periodically checks token validity (every 1 minute)
+  void _startTokenValidationTimer() {
+    _tokenValidationTimer =
+        Timer.periodic(Duration(seconds: 10), (timer) async {
+      final authService = ref.read(authServiceProvider);
+      if (_token != null) {
+        bool isValid = await authService.isTokenValid(_token!);
+        if (!isValid) {
+          _handleSessionExpired();
+        }
+      }
+    });
+  }
+
+  // Handle session expiration: log out the user and navigate to session expired screen
+  void _handleSessionExpired() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => SessionExpiredScreen()),
+      (route) => false,
+    );
+    ref.read(authServiceProvider).logout(); // Perform logout
   }
 
   void _initializeSocketConnection() {
@@ -80,8 +116,12 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   void dispose() {
+    _tokenValidationTimer?.cancel(); // Cancel the token validation timer
     _toDoTextController.dispose();
-    ref.read(socketServiceProvider).disconnect();
+
+    // Disconnect both notes and tasks socket services when disposing the page
+    ref.read(socketServiceProvider).disconnect(); // Notes socket
+    ref.read(socketServiceTasksProvider).disconnect(); // Tasks socket
     super.dispose();
   }
 
@@ -253,8 +293,8 @@ class _MainPageState extends ConsumerState<MainPage> {
         borderRadius: 24.0,
         showShadow: true,
         slideWidth: MediaQuery.of(context).size.width * 0.65,
-        openCurve: Curves.fastOutSlowIn, // Adjust the open curve
-        closeCurve: Curves.bounceIn, // Adjust the close curve
+        openCurve: Curves.fastOutSlowIn,
+        closeCurve: Curves.bounceIn,
       ),
     );
   }
