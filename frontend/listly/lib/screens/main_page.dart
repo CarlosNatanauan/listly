@@ -16,6 +16,9 @@ import '../providers/notes_provider.dart';
 import '../providers/auth_providers.dart'; // Add this import
 import '../dialogs/logout_confirmation_dialog.dart';
 import 'session_expired_screen.dart'; // Import for session expiration redirection
+import '../screens/main_page_screens/account_screen.dart';
+import '../screens/main_page_screens/settings_screen.dart';
+import '../screens/main_page_screens/about_screen.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   final String userName;
@@ -311,72 +314,59 @@ class _MainPageState extends ConsumerState<MainPage> {
 }
 
 class MenuScreen extends ConsumerWidget {
-  final Function(int) onMenuItemTap; // Callback to handle item taps
+  final Function(int) onMenuItemTap;
 
   MenuScreen({required this.onMenuItemTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
-      color: Color(0xFFFF725E), // Keep the main background color
+      color: Color(0xFFFF725E),
       child: Padding(
-        padding:
-            const EdgeInsets.fromLTRB(5, 30, 8, 5), // Reduce vertical padding
+        padding: const EdgeInsets.fromLTRB(5, 30, 8, 5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Close Button
             Padding(
-              padding: const EdgeInsets.only(
-                  left: 1.0, bottom: 16.0), // Reduce padding
+              padding: const EdgeInsets.only(left: 1.0, bottom: 16.0),
               child: Align(
                 alignment: Alignment.topLeft,
                 child: IconButton(
                   onPressed: () {
-                    // Close the drawer
                     ZoomDrawer.of(context)?.toggle();
                   },
                   icon: const Icon(
                     Icons.close,
                     color: Colors.white,
-                    size: 24.0, // Smaller close icon
+                    size: 24.0,
                   ),
                 ),
               ),
             ),
-            // Account ListTile
-            _buildMenuItem(Icons.account_circle, 'Account', 0),
-            // Settings ListTile
-            _buildMenuItem(Icons.settings, 'Settings', 1),
-            // About ListTile
-            _buildMenuItem(Icons.info, 'About', 2),
-            Spacer(), // Push the items to the top
-            // Logout ListTile
+            _buildMenuItem(Icons.account_circle, 'Account', 0, context),
+            _buildMenuItem(Icons.settings, 'Settings', 1, context),
+            _buildMenuItem(Icons.info, 'About', 2, context),
+            Spacer(),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                  vertical: 8.0, horizontal: 8.0), // Consistent padding
+              padding:
+                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
               child: Material(
-                elevation: 4, // Slightly reduced elevation
-                borderRadius:
-                    BorderRadius.circular(10), // Smaller rounded corners
-                color: Color.fromARGB(255, 245, 86,
-                    65), // Keep the same color for the logout item
+                elevation: 4,
+                borderRadius: BorderRadius.circular(10),
+                color: Color.fromARGB(255, 245, 86, 65),
                 child: ListTile(
-                  leading: Icon(Icons.exit_to_app,
-                      color: Colors.white, size: 24), // Icon for logout
+                  leading:
+                      Icon(Icons.exit_to_app, color: Colors.white, size: 24),
                   title: Text(
                     'Logout',
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight:
-                          FontWeight.w500, // Slightly lighter text weight
-                      fontSize: 16, // Smaller font size
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
                     ),
                   ),
                   onTap: () {
-                    // Show logout confirmation dialog
-                    showLogoutConfirmationDialog(
-                        context, ref); // Pass the WidgetRef to the dialog
+                    showLogoutConfirmationDialog(context, ref);
                   },
                 ),
               ),
@@ -387,30 +377,45 @@ class MenuScreen extends ConsumerWidget {
     );
   }
 
-  // Helper method to create a menu item
-  Widget _buildMenuItem(IconData icon, String title, int index) {
+  Widget _buildMenuItem(
+      IconData icon, String title, int index, BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-          vertical: 8.0, horizontal: 8.0), // Reduce padding
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
       child: Material(
-        elevation: 4, // Slightly reduced elevation
-        borderRadius: BorderRadius.circular(10), // Smaller rounded corners
-        color: Color(0xFFFF725E), // Keep the same color for each item
+        elevation: 4,
+        borderRadius: BorderRadius.circular(10),
+        color: Color(0xFFFF725E),
         child: ListTile(
-          leading:
-              Icon(icon, color: Colors.white, size: 24), // Smaller icon size
+          leading: Icon(icon, color: Colors.white, size: 24),
           title: Text(
             title,
             style: TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.w500, // Slightly lighter text weight
-              fontSize: 16, // Smaller font size
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
             ),
           ),
           onTap: () {
-            print(
-                '$title button clicked'); // Print statement for each button clicked
-            onMenuItemTap(index); // Trigger the tap callback
+            if (index == 0) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AccountScreen(),
+                ),
+              );
+            } else if (index == 1) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(),
+                ),
+              );
+            } else if (index == 2) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => AboutScreen(),
+                ),
+              );
+            }
+            onMenuItemTap(index);
           },
         ),
       ),
