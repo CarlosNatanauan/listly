@@ -64,13 +64,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       _initializeSocketConnection();
       _fetchTasks(); // Fetch tasks
 
-      // Fetch notes right after obtaining the token
-      ref.read(notesProvider(_token!).notifier).fetchNotes();
-
-      // **Force UI to update Notes after login**
-      setState(() {
-        _selectedIndex = 0; // Automatically load the Notes screen
-      });
+      // After token is set, use Navigator to reload the MainPage
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
@@ -202,105 +196,110 @@ class _MainPageState extends ConsumerState<MainPage> {
           },
         ),
         mainScreen: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Color.fromARGB(248, 248, 248, 248),
-            automaticallyImplyLeading: false,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      text: 'Hello, ',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Color.fromARGB(255, 97, 93, 93),
-                        fontWeight: FontWeight.w500,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: '${widget.userName}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            color: Color(0xFFFF725E),
-                            fontWeight: FontWeight.w500,
-                          ),
+            appBar: AppBar(
+              backgroundColor: Color.fromARGB(248, 248, 248, 248),
+              automaticallyImplyLeading: false,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'Hello, ',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Color.fromARGB(255, 97, 93, 93),
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                        children: [
+                          TextSpan(
+                            text: '${widget.userName}',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: Color(0xFFFF725E),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.menu),
-                  onPressed: () {
-                    try {
-                      _zoomDrawerController.toggle?.call();
-                    } catch (e) {
-                      print('Error toggling drawer: $e');
-                      _showErrorSnackBar('Error: $e');
-                    }
-                  },
-                ),
+                  IconButton(
+                    icon: Icon(Icons.menu),
+                    onPressed: () {
+                      try {
+                        _zoomDrawerController.toggle?.call();
+                      } catch (e) {
+                        print('Error toggling drawer: $e');
+                        _showErrorSnackBar('Error: $e');
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            body: Stack(
+              children: [
+                // Notes and Tasks conditional loading
+                _selectedIndex == 1
+                    ? tasks.isEmpty
+                        ? Center(child: Text('No tasks available'))
+                        : TodoScreen()
+                    : _token != null && _token!.isNotEmpty
+                        ? NotesScreen(token: _token!)
+                        : Center(
+                            child: CircularProgressIndicator(),
+                          ), // Show loader until token is available
+
+                if (_isAddToDoVisible)
+                  AddToDoWidget(
+                    onClose: _toggleAddToDoWidget,
+                    textController: _toDoTextController,
+                    onSave: _saveToDo,
+                  ),
               ],
             ),
-          ),
-          body: Stack(
-            children: [
-              // Notes and Tasks conditional loading
-              _selectedIndex == 1
-                  ? tasks.isEmpty
-                      ? Center(child: Text('No tasks available'))
-                      : TodoScreen()
-                  : _token != null && _token!.isNotEmpty
-                      ? NotesScreen(token: _token!)
-                      : Center(
-                          child: CircularProgressIndicator(),
-                        ), // Show loader until token is available
-
-              if (_isAddToDoVisible)
-                AddToDoWidget(
-                  onClose: _toggleAddToDoWidget,
-                  textController: _toDoTextController,
-                  onSave: _saveToDo,
+            floatingActionButton: (!_isAddToDoVisible && isFABVisible)
+                ? FloatingActionButton(
+                    onPressed: _handleFABPress,
+                    child: Icon(Icons.add, color: Colors.white),
+                    backgroundColor: Color(0xFFFF725E),
+                    elevation: 5,
+                  )
+                : null,
+            bottomNavigationBar: FlashyTabBar(
+              height: _bottomNavBarHeight,
+              selectedIndex: _selectedIndex,
+              showElevation: true,
+              onItemSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                  if (index == 0) {
+                    // **Fetch notes again when Notes tab is selected**
+                    if (_token != null) {
+                      ref.read(notesProvider(_token!).notifier).fetchNotes();
+                    }
+                  }
+                  if (index != 1) {
+                    _isAddToDoVisible = false;
+                  }
+                });
+              },
+              items: [
+                FlashyTabBarItem(
+                  icon: Icon(Icons.note),
+                  title: Text('Notes'),
+                  inactiveColor: Color.fromARGB(255, 255, 218, 213),
+                  activeColor: Color(0xFFFF725E),
                 ),
-            ],
-          ),
-          floatingActionButton: (!_isAddToDoVisible && isFABVisible)
-              ? FloatingActionButton(
-                  onPressed: _handleFABPress,
-                  child: Icon(Icons.add, color: Colors.white),
-                  backgroundColor: Color(0xFFFF725E),
-                  elevation: 5,
-                )
-              : null,
-          bottomNavigationBar: FlashyTabBar(
-            height: _bottomNavBarHeight,
-            selectedIndex: _selectedIndex,
-            showElevation: true,
-            onItemSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-                if (index != 1) {
-                  _isAddToDoVisible = false;
-                }
-              });
-            },
-            items: [
-              FlashyTabBarItem(
-                icon: Icon(Icons.note),
-                title: Text('Notes'),
-                inactiveColor: Color.fromARGB(255, 255, 218, 213),
-                activeColor: Color(0xFFFF725E),
-              ),
-              FlashyTabBarItem(
-                icon: Icon(Icons.check_circle),
-                title: Text('To-do'),
-                inactiveColor: Color.fromARGB(255, 255, 218, 213),
-                activeColor: Color(0xFFFF725E),
-              ),
-            ],
-          ),
-        ),
+                FlashyTabBarItem(
+                  icon: Icon(Icons.check_circle),
+                  title: Text('To-do'),
+                  inactiveColor: Color.fromARGB(255, 255, 218, 213),
+                  activeColor: Color(0xFFFF725E),
+                ),
+              ],
+            )),
         borderRadius: 24.0,
         showShadow: true,
         slideWidth: MediaQuery.of(context).size.width * 0.65,

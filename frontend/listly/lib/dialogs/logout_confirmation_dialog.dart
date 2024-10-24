@@ -34,17 +34,17 @@ Future<void> showLogoutConfirmationDialog(
             child: Text('Logout', style: TextStyle(color: Color(0xFFFF725E))),
             onPressed: () {
               Navigator.of(context).pop(); // Close the dialog
+
+              // Logout only affects this device's socket
               ref
                   .read(authServiceProvider)
                   .logout(); // Call the logout function
 
-              ref
-                  .read(socketServiceProvider)
-                  .disconnect(); // Disconnect notes socket
-
+              // Disconnect the sockets for the current device only
+              ref.read(socketServiceProvider).disconnect();
               ref.read(socketServiceTasksProvider).disconnect();
 
-              // Directly navigate to SplashScreen
+              // Navigate to the SplashScreen after logging out
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
                   builder: (context) => SplashScreen(),

@@ -11,13 +11,17 @@ class NotesNotifier extends StateNotifier<AsyncValue<List<Note>>> {
   final SocketService socketService; // Add socket service
 
   NotesNotifier(this.token, this.socketService) : super(AsyncLoading()) {
-    fetchNotes(); // Load notes when the notifier is created
+    // Load notes when the notifier is created
+    fetchNotes();
 
     // Connect to the Notes socket service for real-time updates
-    socketService.connect(token, (updatedNote) {
-      // Handle real-time updates for notes
-      fetchNotes(); // Refetch notes when an update is received via socket
-    });
+    socketService.connect(token, _handleNoteUpdate);
+  }
+
+  // Handle real-time note updates from the socket
+  void _handleNoteUpdate(Note updatedNote) async {
+    // Fetch notes or handle specific update logic if required
+    await fetchNotes();
   }
 
   Future<void> fetchNotes() async {

@@ -21,9 +21,11 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   @override
   void initState() {
     super.initState();
-    // Ensure the notes are fetched when the screen is first loaded
-    Future.microtask(
-        () => ref.read(notesProvider(widget.token).notifier).fetchNotes());
+
+    // Subscribe to note updates using the socket connection
+    Future.microtask(() {
+      ref.read(notesProvider(widget.token).notifier).fetchNotes();
+    });
   }
 
   @override
@@ -32,7 +34,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     return Scaffold(
       backgroundColor:
-          Color.fromARGB(248, 248, 248, 248), // Set the screen background color
+          Color.fromARGB(248, 248, 248, 248), // Screen background color
       body: Column(
         children: [
           Padding(
@@ -61,11 +63,19 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       _extractPlainText(note.content)
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase());
-                })
-                    // Sort by 'createdAt' in descending order (latest first)
-                    .toList()
-                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                }).toList()
+                  ..sort((a, b) =>
+                      b.createdAt.compareTo(a.createdAt)); // Sort by createdAt
 
+                // Check if there are no notes after filtering
+                if (filteredNotes.isEmpty) {
+                  return Center(
+                    child: Text('No notes found',
+                        style: TextStyle(fontSize: 16, color: Colors.grey)),
+                  );
+                }
+
+                // Display the notes list
                 return ListView.builder(
                   itemCount: filteredNotes.length,
                   itemBuilder: (context, index) {
@@ -113,7 +123,6 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Format date and time using intl package
                                   Text(
                                     _formatDateTime(note.createdAt),
                                     style: TextStyle(
@@ -148,8 +157,11 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                   },
                 );
               },
-              loading: () => Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+              loading: () => Center(
+                  child: CircularProgressIndicator()), // Show loading indicator
+              error: (error, stack) => Center(
+                child: Text('Error loading notes: $error'), // Show error if any
+              ),
             ),
           ),
         ],
