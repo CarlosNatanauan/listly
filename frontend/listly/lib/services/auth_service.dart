@@ -1,7 +1,10 @@
+//auth_service.dart
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import 'api_service.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import '../providers/socket_service_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AuthService {
   User? _currentUser;
@@ -18,7 +21,7 @@ class AuthService {
     }
   }
 
-  Future<User?> login(String username, String password) async {
+  Future<User?> login(String username, String password, WidgetRef ref) async {
     try {
       final data = await ApiService.login(username, password);
       if (data != null && data['token'] != null && data['userId'] != null) {
@@ -26,6 +29,11 @@ class AuthService {
         _currentUser = user;
         await _storeToken(user.token);
         await _storeUsername(user.username);
+
+        // Reconnect to the socket services with the new token after login
+        final socketService = ref.read(socketServiceProvider);
+        socketService.connect(user.token, ref.read(noteUpdateProvider));
+
         return user;
       }
     } catch (e) {

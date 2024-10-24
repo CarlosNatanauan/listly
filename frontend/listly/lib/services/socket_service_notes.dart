@@ -7,25 +7,25 @@ class SocketService {
 
   // Connect method to accept a callback
   void connect(String token, Function(Note) onNoteUpdate) {
-    if (socket == null || !socket!.connected) {
-      socket = IO.io('http://192.168.0.111:5000', <String, dynamic>{
-        'transports': ['websocket'],
-        'extraHeaders': {'Authorization': 'Bearer $token'},
-      });
+    disconnect(); // Ensure any previous connection is closed before reconnecting
 
-      socket!.on('connect', (_) {
-        print('Connected to socket server');
-      });
+    socket = IO.io('http://192.168.0.111:5000', <String, dynamic>{
+      'transports': ['websocket'],
+      'extraHeaders': {'Authorization': 'Bearer $token'},
+    });
 
-      socket!.on('noteUpdated', (data) {
-        Note updatedNote = Note.fromJson(data);
-        onNoteUpdate(updatedNote); // Pass updated note to the callback
-      });
+    socket!.on('connect', (_) {
+      print('Connected to socket server');
+    });
 
-      socket!.on('disconnect', (_) {
-        print('Disconnected from socket server');
-      });
-    }
+    socket!.on('noteUpdated', (data) {
+      Note updatedNote = Note.fromJson(data);
+      onNoteUpdate(updatedNote); // Pass updated note to the callback
+    });
+
+    socket!.on('disconnect', (_) {
+      print('Disconnected from socket server');
+    });
   }
 
   void disconnect() {

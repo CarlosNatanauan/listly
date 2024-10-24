@@ -4,6 +4,7 @@ import 'package:listly/screens/onboarding_screen.dart';
 import 'main_page.dart'; // Assuming this is where your MainPage class is defined
 import '../providers/auth_providers.dart'; // Assuming this is your authentication provider
 import '../providers/notes_provider.dart'; // Assuming this is your notes provider
+import '../providers/socket_service_provider.dart';
 
 class FetchingScreen extends ConsumerStatefulWidget {
   @override
@@ -25,6 +26,10 @@ class _FetchingScreenState extends ConsumerState<FetchingScreen> {
 
     if (token != null) {
       _token = token;
+
+      // Reconnect to the socket services
+      final socketService = ref.read(socketServiceProvider);
+      socketService.connect(_token!, ref.read(noteUpdateProvider));
 
       // Fetch notes before navigating to MainPage
       await _fetchNotes();

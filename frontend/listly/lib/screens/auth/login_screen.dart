@@ -25,7 +25,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     final authService = ref.read(authServiceProvider); // Access authService
-    final user = await authService.login(username, password);
+    final user = await authService.login(username, password, ref);
 
     setState(() {
       _isLoading = false;
