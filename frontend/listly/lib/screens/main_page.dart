@@ -424,8 +424,6 @@ class MenuScreen extends ConsumerWidget {
                 ),
               );
             }
-            onMenuItemTap(
-                index); // Notify parent widget about the selected menu item
           },
         ),
       ),
