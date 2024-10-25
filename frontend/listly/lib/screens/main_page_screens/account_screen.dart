@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'account_screen/change_password_loggedin/forgot_password.dart';
+import './account_screen/account_deletion.dart';
 
 class AccountScreen extends StatelessWidget {
+  final String username;
+  final String email;
+
+  final String token;
+
+  AccountScreen(
+      {required this.username, required this.email, required this.token});
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -46,7 +55,7 @@ class AccountScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
-                'placeholder_username', // Placeholder value
+                username, // Display logged-in username
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.black54,
@@ -72,7 +81,7 @@ class AccountScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
-                'placeholder_email@example.com', // Placeholder value
+                email, // Display logged-in email
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.black54,
@@ -94,18 +103,22 @@ class AccountScreen extends StatelessWidget {
               width: screenWidth * 0.5,
               child: ElevatedButton(
                 onPressed: () {
-                  // Navigate to Change Password Screen
+                  // Navigate to ForgotPasswordScreenInside with email passed as a parameter
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ForgotPasswordScreenInside(email: email),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF725E), // Custom color
-                  foregroundColor: Colors.white, // Text color
-                  padding: EdgeInsets.symmetric(
-                    vertical: 13.0,
-                  ),
+                  backgroundColor: Color(0xFFFF725E),
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(vertical: 13.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15), // Rounded edges
+                    borderRadius: BorderRadius.circular(15),
                   ),
-                  elevation: 5, // Shadow effect
+                  elevation: 5,
                 ),
                 child: Text(
                   'Change Password',
@@ -128,7 +141,14 @@ class AccountScreen extends StatelessWidget {
               width: screenWidth * 0.5,
               child: ElevatedButton(
                 onPressed: () {
-                  // Handle account deletion logic
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => AccountDeletion(
+                        email: email,
+                        token: token,
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFFF725E), // Red color for delete

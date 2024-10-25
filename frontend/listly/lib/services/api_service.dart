@@ -23,6 +23,22 @@ class ApiService {
     }
   }
 
+  // New method to get the accountDeletedAt timestamp
+  static Future<dynamic> getAccountDeletedAt(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/auth/account-deleted-at'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch accountDeletedAt');
+    }
+  }
+
   static Future<dynamic> login(String username, String password) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/login'),
@@ -260,6 +276,25 @@ class ApiService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to change password: ${response.body}');
+    }
+  }
+
+  static Future<void> deleteAccount(String email, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/auth/delete-account'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'email': email,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to delete account');
     }
   }
 }

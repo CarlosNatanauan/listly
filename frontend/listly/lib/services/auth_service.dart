@@ -15,31 +15,49 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
     final username = prefs.getString('username');
+    final email = prefs.getString('email'); // Load email from preferences
 
-    if (token != null && username != null) {
-      _currentUser = User(id: 'user_id_here', username: username, token: token);
+    if (token != null && username != null && email != null) {
+      _currentUser = User(
+          id: 'user_id_here', username: username, token: token, email: email);
     }
   }
 
   Future<User?> login(String username, String password, WidgetRef ref) async {
     try {
       final data = await ApiService.login(username, password);
-      if (data != null && data['token'] != null && data['userId'] != null) {
-        final user = User.fromJson(data);
+
+      // Ensure that the response contains all necessary fields
+      if (data != null &&
+          data['token'] != null &&
+          data['userId'] != null &&
+          data['email'] != null) {
+        final user = User.fromJson(data); // Now the User class includes email
         _currentUser = user;
         await _storeToken(user.token);
         await _storeUsername(user.username);
+        await _storeEmail(user.email); // Store email
 
-        // Reconnect to the socket services with the new token after login
+        // Reconnect to socket services
         final socketService = ref.read(socketServiceProvider);
         socketService.connect(user.token, ref.read(noteUpdateProvider));
 
         return user;
+      } else {
+        // Handle cases where email, token, or userId is missing
+        print("Login error: Missing fields in the API response");
+        return null;
       }
     } catch (e) {
       print('Login error: $e');
+      return null;
     }
-    return null;
+  }
+
+// Add method to store email in SharedPreferences
+  Future<void> _storeEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
   }
 
   Future<bool> register(String username, String email, String password) async {
@@ -62,26 +80,37 @@ class AuthService {
 
   Future<bool> isTokenValid(String token) async {
     try {
-      final data = await ApiService.getPasswordChangedAt(token);
-      if (data == null || data['passwordChangedAt'] == null) {
-        // If passwordChangedAt is null, assume token is valid (password hasn't been changed)
-        return true;
+      // Fetch passwordChangedAt timestamp
+      final passwordData = await ApiService.getPasswordChangedAt(token);
+      DateTime? passwordChangedAtServer;
+      if (passwordData != null && passwordData['passwordChangedAt'] != null) {
+        passwordChangedAtServer =
+            DateTime.parse(passwordData['passwordChangedAt']);
       }
 
-      final passwordChangedAtServer = DateTime.parse(data['passwordChangedAt']);
+      // Fetch accountDeletedAt timestamp
+      final deleteData = await ApiService.getAccountDeletedAt(token);
+      DateTime? accountDeletedAtServer;
+      if (deleteData != null && deleteData['accountDeletedAt'] != null) {
+        accountDeletedAtServer = DateTime.parse(deleteData['accountDeletedAt']);
+      }
 
-      // Decode the token to extract all claims
+      // Decode the token to get the issued-at (iat) time
       Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
-
-      // Extract the issued-at (iat) time from the token
       final tokenIssuedAt = decodedToken['iat'];
-
-      // Convert the issued-at time to DateTime
       final tokenIssuedAtDateTime =
           DateTime.fromMillisecondsSinceEpoch(tokenIssuedAt * 1000);
 
-      // If token was issued before the password was changed, return false
-      return tokenIssuedAtDateTime.isAfter(passwordChangedAtServer);
+      // If token was issued before either the password was changed or the account was deleted, return false
+      if ((accountDeletedAtServer != null &&
+              tokenIssuedAtDateTime.isBefore(accountDeletedAtServer)) ||
+          (passwordChangedAtServer != null &&
+              tokenIssuedAtDateTime.isBefore(passwordChangedAtServer))) {
+        return false;
+      }
+
+      // If no issues, the token is still valid
+      return true;
     } catch (e) {
       print('Token validation error: $e');
       return false;

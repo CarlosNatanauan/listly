@@ -73,10 +73,10 @@ class _MainPageState extends ConsumerState<MainPage> {
     }
   }
 
-  // Method to start a timer that periodically checks token validity (every 1 minute)
+  // Method to start a timer that periodically checks token validity (20 seconds)
   void _startTokenValidationTimer() {
     _tokenValidationTimer =
-        Timer.periodic(Duration(seconds: 10), (timer) async {
+        Timer.periodic(Duration(seconds: 20), (timer) async {
       final authService = ref.read(authServiceProvider);
       if (_token != null) {
         bool isValid = await authService.isTokenValid(_token!);
@@ -343,9 +343,9 @@ class MenuScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            _buildMenuItem(Icons.account_circle, 'Account', 0, context),
-            _buildMenuItem(Icons.settings, 'Settings', 1, context),
-            _buildMenuItem(Icons.info, 'About', 2, context),
+            _buildMenuItem(Icons.account_circle, 'Account', 0, context, ref),
+            _buildMenuItem(Icons.settings, 'Settings', 1, context, ref),
+            _buildMenuItem(Icons.info, 'About', 2, context, ref),
             Spacer(),
             Padding(
               padding:
@@ -377,8 +377,8 @@ class MenuScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMenuItem(
-      IconData icon, String title, int index, BuildContext context) {
+  Widget _buildMenuItem(IconData icon, String title, int index,
+      BuildContext context, WidgetRef ref) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 8.0),
       child: Material(
@@ -395,11 +395,20 @@ class MenuScreen extends ConsumerWidget {
               fontSize: 16,
             ),
           ),
-          onTap: () {
-            if (index == 0) {
+          onTap: () async {
+            final authService = ref.read(authServiceProvider);
+            final user = authService.currentUser; // Get the current user
+            final token = await authService.getToken(); // Fetch the token
+
+            if (index == 0 && user != null && token != null) {
+              // Ensure the user is logged in and token is available before navigating to AccountScreen
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => AccountScreen(),
+                  builder: (context) => AccountScreen(
+                    username: user.username, // Pass the username
+                    email: user.email, // Pass the email
+                    token: token, // Pass the token
+                  ),
                 ),
               );
             } else if (index == 1) {
@@ -415,7 +424,8 @@ class MenuScreen extends ConsumerWidget {
                 ),
               );
             }
-            onMenuItemTap(index);
+            onMenuItemTap(
+                index); // Notify parent widget about the selected menu item
           },
         ),
       ),
