@@ -41,14 +41,17 @@ io.on('connection', (socket) => {
 });
 
 // Pass io to the routes
-const authRoutes = require('./routes/authRoutes')(); // Removed IO from auth
-const noteRoutes = require('./routes/noteRoutes')(io); // Pass io to the note routes
-const taskRoutes = require('./routes/taskRoutes')(io); // Pass io to the task routes
+const authRoutes = require('./routes/authRoutes')(); 
+const noteRoutes = require('./routes/noteRoutes')(io); 
+const taskRoutes = require('./routes/taskRoutes')(io);
+const feedbackRoutes = require('./routes/feedbackRoutes');
+
 
 // Use the routes after the middleware
 app.use('/auth', authRoutes);
 app.use('/notes', noteRoutes);
 app.use('/tasks', taskRoutes);
+app.use('/feedback', feedbackRoutes); 
 
 // Basic route
 app.get('/', (req, res) => {
