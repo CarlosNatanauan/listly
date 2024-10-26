@@ -401,7 +401,7 @@ class MenuScreen extends ConsumerWidget {
             final token = await authService.getToken(); // Fetch the token
 
             if (index == 0 && user != null && token != null) {
-              // Ensure the user is logged in and token is available before navigating to AccountScreen
+              // Navigate to AccountScreen with user and token
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => AccountScreen(
@@ -411,10 +411,17 @@ class MenuScreen extends ConsumerWidget {
                   ),
                 ),
               );
-            } else if (index == 1) {
+            } else if (index == 1 && user != null && token != null) {
+              print(
+                  "Navigating to SettingsScreen with email: ${user.email} and token: $token");
+
+              // Navigate to SettingsScreen with token and email
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (context) => SettingsScreen(),
+                  builder: (context) => SettingsScreen(
+                    email: user.email, // Use the non-null email
+                    token: token, // Use the non-null token
+                  ),
                 ),
               );
             } else if (index == 2) {
@@ -422,6 +429,11 @@ class MenuScreen extends ConsumerWidget {
                 MaterialPageRoute(
                   builder: (context) => AboutScreen(),
                 ),
+              );
+            } else {
+              // Show an error if token or email is missing
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Authentication details are missing.')),
               );
             }
           },

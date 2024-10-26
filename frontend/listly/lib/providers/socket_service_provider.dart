@@ -1,4 +1,4 @@
-//socket_service_provider.dart
+//socket_service_provider.dart for notes
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/socket_service_notes.dart';
 import '../models/note.dart';

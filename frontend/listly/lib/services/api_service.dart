@@ -80,16 +80,18 @@ class ApiService {
 
   static Future<List<dynamic>> fetchTasks(String token) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/tasks'), // Adjust to your backend URL
+      Uri.parse('$_baseUrl/tasks'),
       headers: {
-        'Authorization': 'Bearer $token', // Include token for authentication
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
-      return jsonResponse; // Return the raw JSON response
+      return jsonResponse.isNotEmpty
+          ? jsonResponse
+          : []; // Ensure it’s not null
     } else {
       throw Exception('Failed to load tasks');
     }
@@ -150,19 +152,21 @@ class ApiService {
     }
   }
 
-  //Notes
+// Notes fetching with detailed error logging
   static Future<List<Note>> fetchNotes(String token) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/notes'), // Adjust to your backend URL
+      Uri.parse('$_baseUrl/notes'),
       headers: {
-        'Authorization': 'Bearer $token', // Include token for authentication
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
-      return jsonResponse.map((note) => Note.fromJson(note)).toList();
+      return jsonResponse.isNotEmpty
+          ? jsonResponse.map((note) => Note.fromJson(note)).toList()
+          : []; // Ensure it’s not null
     } else {
       throw Exception('Failed to load notes');
     }

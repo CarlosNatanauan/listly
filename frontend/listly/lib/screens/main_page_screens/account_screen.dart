@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'account_screen/change_password_loggedin/forgot_password.dart';
-import './account_screen/account_deletion.dart';
+import 'account_screen/account_deletion.dart';
 
 class AccountScreen extends StatelessWidget {
   final String username;
