@@ -22,6 +22,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
     final tasks = ref.watch(tasksProvider);
 
     // Sort tasks by creation date to display the newest first
@@ -65,53 +66,74 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
           Expanded(
             child: Stack(
               children: [
-                ListView(
-                  children: [
-                    if (notCompletedTasks.isNotEmpty) ...[
-                      Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
-                        child: Text('Not Completed',
-                            style:
-                                TextStyle(fontSize: 16, color: Colors.black54)),
-                      ),
-                      ...notCompletedTasks
-                          .map((task) => _buildTaskCard(context, task)),
-                    ],
-                    if (completedTasks.isNotEmpty) ...[
-                      Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
-                        child: InkWell(
-                          onTap: () {
-                            setState(() {
-                              _showCompletedTasks =
-                                  !_showCompletedTasks; // Toggle state
-                            });
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Completed',
-                                  style: TextStyle(
-                                      fontSize: 16, color: Colors.black54)),
-                              Icon(
-                                _showCompletedTasks
-                                    ? Icons.arrow_drop_up
-                                    : Icons.arrow_drop_down,
-                                color: Colors.black54,
-                              ),
-                            ],
-                          ),
+                if (notCompletedTasks.isNotEmpty || completedTasks.isNotEmpty)
+                  ListView(
+                    children: [
+                      if (notCompletedTasks.isNotEmpty) ...[
+                        Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
+                          child: Text('Not Completed',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.black54)),
                         ),
-                      ),
-                      if (_showCompletedTasks) ...[
-                        ...completedTasks
+                        ...notCompletedTasks
                             .map((task) => _buildTaskCard(context, task)),
                       ],
+                      if (completedTasks.isNotEmpty) ...[
+                        Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(16.0, 16.0, 8.0, 4.0),
+                          child: InkWell(
+                            onTap: () {
+                              setState(() {
+                                _showCompletedTasks =
+                                    !_showCompletedTasks; // Toggle state
+                              });
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Completed',
+                                    style: TextStyle(
+                                        fontSize: 16, color: Colors.black54)),
+                                Icon(
+                                  _showCompletedTasks
+                                      ? Icons.arrow_drop_up
+                                      : Icons.arrow_drop_down,
+                                  color: Colors.black54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        if (_showCompletedTasks) ...[
+                          ...completedTasks
+                              .map((task) => _buildTaskCard(context, task)),
+                        ],
+                      ],
                     ],
-                  ],
-                ),
+                  )
+                else
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/empty.png',
+                          width: screenWidth * 0.4,
+                          fit: BoxFit.cover,
+                        ),
+                        SizedBox(
+                            height:
+                                10), // Add spacing between the image and text
+                        Text(
+                          'No Tasks available. Add one!',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_isEditToDoVisible)
                   EditToDoWidget(
                     onClose: _toggleEditToDoWidget,

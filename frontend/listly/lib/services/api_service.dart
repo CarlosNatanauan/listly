@@ -301,4 +301,26 @@ class ApiService {
       throw Exception('Failed to delete account');
     }
   }
+
+  //for feedback
+  // api_service.dart
+
+  static Future<void> submitFeedback(
+      int rating, String additionalComments, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/feedback/submit'),
+      headers: {
+        'Authorization': 'Bearer $token', // Include the user token
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'rating': rating,
+        'additionalComments': additionalComments,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to submit feedback');
+    }
+  }
 }

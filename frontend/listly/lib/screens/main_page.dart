@@ -245,9 +245,7 @@ class _MainPageState extends ConsumerState<MainPage> {
               children: [
                 // Notes and Tasks conditional loading
                 _selectedIndex == 1
-                    ? tasks.isEmpty
-                        ? Center(child: Text('No tasks available'))
-                        : TodoScreen()
+                    ? TodoScreen()
                     : _token != null && _token!.isNotEmpty
                         ? NotesScreen(token: _token!)
                         : Center(

@@ -32,6 +32,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
   Widget build(BuildContext context) {
     final notesAsyncValue = ref.watch(notesProvider(widget.token));
 
+    final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor:
           Color.fromARGB(248, 248, 248, 248), // Screen background color
@@ -70,8 +71,23 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 // Check if there are no notes after filtering
                 if (filteredNotes.isEmpty) {
                   return Center(
-                    child: Text('No notes found',
-                        style: TextStyle(fontSize: 16, color: Colors.grey)),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/empty.png',
+                          width: screenWidth * 0.4,
+                          fit: BoxFit.cover,
+                        ),
+                        SizedBox(
+                            height:
+                                10), // Add spacing between the image and text
+                        Text(
+                          'No Notes available. Add one!',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   );
                 }
 

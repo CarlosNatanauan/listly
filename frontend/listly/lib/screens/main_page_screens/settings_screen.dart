@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import './settings_screens/clear_data.dart';
+import './settings_screens/feedback.dart';
+import './settings_screens/privacy_policy_terms.dart';
 
 class SettingsScreen extends ConsumerWidget {
   final String email;
@@ -85,7 +87,14 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(15),
               child: InkWell(
                 onTap: () {
-                  // Add logic to view privacy policy and terms of service
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => FeedbackScreen(
+                        email: email,
+                        token: token,
+                      ),
+                    ),
+                  );
                 },
                 borderRadius: BorderRadius.circular(15),
                 child: Container(
@@ -119,7 +128,11 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(15),
               child: InkWell(
                 onTap: () {
-                  // Add logic to view privacy policy and terms of service
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => PrivacyPolicyTermsScreen(),
+                    ),
+                  );
                 },
                 borderRadius: BorderRadius.circular(15),
                 child: Container(

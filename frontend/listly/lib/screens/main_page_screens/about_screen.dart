@@ -42,7 +42,7 @@ class AboutScreen extends StatelessWidget {
               Center(
                 child: Image.asset(
                   'assets/images/about_image.png',
-                  width: screenWidth * 0.5,
+                  width: screenWidth * 0.6,
                   fit: BoxFit.cover,
                 ),
               ),

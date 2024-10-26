@@ -47,10 +47,12 @@ class AccountDeletion extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/delete_account.png',
-              height: 150,
-              width: 150,
+            Center(
+              child: Image.asset(
+                'assets/images/delete_account.png',
+                width: screenWidth * 0.7,
+                fit: BoxFit.cover,
+              ),
             ),
             SizedBox(height: 30),
             Text(

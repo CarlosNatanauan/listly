@@ -101,10 +101,12 @@ class ClearDataScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/images/clear_data.png',
-              height: 150,
-              width: 150,
+            Center(
+              child: Image.asset(
+                'assets/images/clear_data.png',
+                width: screenWidth * 0.7,
+                fit: BoxFit.cover,
+              ),
             ),
             SizedBox(height: 30),
             Text(
