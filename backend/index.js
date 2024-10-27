@@ -1,15 +1,14 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const http = require('http'); // Import http to create a server
-const { Server } = require('socket.io'); // Import Socket.IO
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
-const server = http.createServer(app); // Create the server
-const io = new Server(server); // Attach Socket.IO to the server
+const server = http.createServer(app);
+const io = new Server(server);
 
 const PORT = process.env.PORT || 5000;
-const HOST = '192.168.0.111'; // Specify your IP address here
 
 // Middleware
 app.use(express.json());
@@ -30,28 +29,24 @@ io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   socket.on('noteUpdated', (note) => {
-    // Broadcast the updated note to all connected clients
     socket.broadcast.emit('noteUpdated', note);
   });
-
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
 });
 
-// Pass io to the routes
-const authRoutes = require('./routes/authRoutes')(); 
-const noteRoutes = require('./routes/noteRoutes')(io); 
+// Routes
+const authRoutes = require('./routes/authRoutes')();
+const noteRoutes = require('./routes/noteRoutes')(io);
 const taskRoutes = require('./routes/taskRoutes')(io);
 const feedbackRoutes = require('./routes/feedbackRoutes');
 
-
-// Use the routes after the middleware
 app.use('/auth', authRoutes);
 app.use('/notes', noteRoutes);
 app.use('/tasks', taskRoutes);
-app.use('/feedback', feedbackRoutes); 
+app.use('/feedback', feedbackRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
@@ -59,6 +54,6 @@ app.get('/', (req, res) => {
 });
 
 // Start the server
-server.listen(PORT, HOST, () => {
-  console.log(`Server is running on http://${HOST}:${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
