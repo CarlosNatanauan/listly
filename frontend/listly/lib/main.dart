@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/splash_screen.dart';
+import 'connectivity_wrapper.dart';
 
 void main() {
   runApp(ProviderScope(child: MyApp()));
@@ -9,13 +10,15 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Notepad ToDo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
+    return ConnectivityWrapper(
+      child: MaterialApp(
+        title: 'Notepad ToDo',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+        ),
+        debugShowCheckedModeBanner: false,
+        home: SplashScreen(),
       ),
-      debugShowCheckedModeBanner: false,
-      home: SplashScreen(), // Start with SplashScreen to check login status
     );
   }
 }

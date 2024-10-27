@@ -19,6 +19,8 @@ import 'session_expired_screen.dart'; // Import for session expiration redirecti
 import '../screens/main_page_screens/account_screen.dart';
 import '../screens/main_page_screens/settings_screen.dart';
 import '../screens/main_page_screens/about_screen.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../providers/connectivity_provider.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   final String userName;
@@ -30,24 +32,21 @@ class MainPage extends ConsumerStatefulWidget {
 }
 
 class _MainPageState extends ConsumerState<MainPage> {
-  int _selectedIndex = 0; // To keep track of the selected tab
-  final double _bottomNavBarHeight =
-      55.0; // Height of the bottom navigation bar
-  bool _isAddToDoVisible = false; // State for the Add ToDo widget visibility
-  TextEditingController _toDoTextController =
-      TextEditingController(); // Controller for ToDo input
-  String? _token; // Authentication token
-  bool _isSocketConnected = false; // Socket connection state
-  Timer? _tokenValidationTimer; // Timer to periodically check token validity
-
-  final _zoomDrawerController =
-      ZoomDrawerController(); // Initialize ZoomDrawerController
+  int _selectedIndex = 0;
+  final double _bottomNavBarHeight = 55.0;
+  bool _isAddToDoVisible = false;
+  TextEditingController _toDoTextController = TextEditingController();
+  String? _token;
+  bool _isSocketConnected = false;
+  Timer? _tokenValidationTimer;
+  final _zoomDrawerController = ZoomDrawerController();
+  bool _isListening = false; // Flag to prevent multiple listens
 
   @override
   void initState() {
     super.initState();
-    _fetchTokenAndData(); // Fetch token and notes/tasks
-    _startTokenValidationTimer(); // Start periodic token validation
+    _fetchTokenAndData();
+    _startTokenValidationTimer();
   }
 
   Future<void> _fetchTokenAndData() async {
@@ -56,29 +55,26 @@ class _MainPageState extends ConsumerState<MainPage> {
 
     if (token != null) {
       _token = token;
-
       print("Token is set: $_token");
 
-      // Reinitialize both sockets for notes and tasks with fresh token
       ref.read(socketServiceProvider).disconnect();
       ref.read(socketServiceTasksProvider).disconnect();
 
       _isSocketConnected = false;
       _initializeSocketConnection();
-      _fetchTasks(); // Fetch tasks
-
-      // After token is set, use Navigator to reload the MainPage
+      _fetchTasks();
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
   }
 
-  // Method to start a timer that periodically checks token validity (20 seconds)
+  // Start token validation timer, only if connected
   void _startTokenValidationTimer() {
     _tokenValidationTimer =
         Timer.periodic(Duration(seconds: 20), (timer) async {
-      final authService = ref.read(authServiceProvider);
-      if (_token != null) {
+      final connectivityStatus = ref.read(connectivityProvider).value;
+      if (connectivityStatus != ConnectivityResult.none && _token != null) {
+        final authService = ref.read(authServiceProvider);
         bool isValid = await authService.isTokenValid(_token!);
         if (!isValid) {
           _handleSessionExpired();
@@ -87,22 +83,26 @@ class _MainPageState extends ConsumerState<MainPage> {
     });
   }
 
-  // Handle session expiration: log out the user and navigate to session expired screen
+  // Stop token validation timer
+  void _stopTokenValidationTimer() {
+    _tokenValidationTimer?.cancel();
+  }
+
+  // Handle session expiration
   void _handleSessionExpired() {
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => SessionExpiredScreen()),
       (route) => false,
     );
-    ref.read(authServiceProvider).logout(); // Perform logout
+    ref.read(authServiceProvider).logout();
   }
 
+  // Initialize socket connection for notes
   void _initializeSocketConnection() {
     final socketService = ref.read(socketServiceProvider);
     if (_token != null) {
       socketService.connect(_token!, (updatedNote) {
-        ref
-            .read(notesProvider(_token!).notifier)
-            .fetchNotes(); // Ensure refetching notes on update
+        ref.read(notesProvider(_token!).notifier).fetchNotes();
       });
       _isSocketConnected = true;
     } else {
@@ -120,14 +120,26 @@ class _MainPageState extends ConsumerState<MainPage> {
     }
   }
 
+  // Handle connectivity restoration
+  void _handleConnectivityRestoration() {
+    _startTokenValidationTimer(); // Restart the timer if it was stopped
+    _initializeSocketConnection(); // Reinitialize the socket connection for notes
+    _fetchTasks(); // Refetch tasks to ensure data is up-to-date
+    print("Internet connection restored: Notes and tasks re-fetched");
+  }
+
+  // Stop timer and handle connectivity loss
+  void _handleConnectivityLoss() {
+    _stopTokenValidationTimer(); // Stop the timer
+    print("Internet connection lost: Timer stopped");
+  }
+
   @override
   void dispose() {
-    _tokenValidationTimer?.cancel(); // Cancel the token validation timer
+    _tokenValidationTimer?.cancel();
     _toDoTextController.dispose();
-
-    // Disconnect both notes and tasks socket services when disposing the page
-    ref.read(socketServiceProvider).disconnect(); // Notes socket
-    ref.read(socketServiceTasksProvider).disconnect(); // Tasks socket
+    ref.read(socketServiceProvider).disconnect();
+    ref.read(socketServiceTasksProvider).disconnect();
     super.dispose();
   }
 
@@ -181,6 +193,19 @@ class _MainPageState extends ConsumerState<MainPage> {
     final tasks = ref.watch(tasksProvider);
     final isFABVisible = ref.watch(fabVisibilityProvider);
 
+    // Listen for connectivity changes, stopping and starting the timer as needed
+    if (!_isListening) {
+      _isListening = true;
+      ref.listen<AsyncValue<ConnectivityResult>>(connectivityProvider,
+          (previous, next) {
+        if (next.value == ConnectivityResult.none) {
+          _handleConnectivityLoss();
+        } else {
+          _handleConnectivityRestoration();
+        }
+      });
+    }
+
     return WillPopScope(
       onWillPop: () async {
         SystemNavigator.pop();
@@ -189,13 +214,13 @@ class _MainPageState extends ConsumerState<MainPage> {
       child: ZoomDrawer(
         menuBackgroundColor: Color.fromARGB(255, 255, 139, 124),
         controller: _zoomDrawerController,
-        style: DrawerStyle.defaultStyle, // Change to desired style
+        style: DrawerStyle.defaultStyle,
         menuScreen: MenuScreen(
           onMenuItemTap: (index) {
             setState(() {
-              _selectedIndex = index; // Update the selected index
+              _selectedIndex = index;
             });
-            _zoomDrawerController.toggle?.call(); // Close the drawer
+            _zoomDrawerController.toggle?.call();
           },
         ),
         mainScreen: Scaffold(
@@ -243,15 +268,13 @@ class _MainPageState extends ConsumerState<MainPage> {
             ),
             body: Stack(
               children: [
-                // Notes and Tasks conditional loading
                 _selectedIndex == 1
                     ? TodoScreen()
                     : _token != null && _token!.isNotEmpty
                         ? NotesScreen(token: _token!)
                         : Center(
                             child: CircularProgressIndicator(),
-                          ), // Show loader until token is available
-
+                          ),
                 if (_isAddToDoVisible)
                   AddToDoWidget(
                     onClose: _toggleAddToDoWidget,
@@ -275,11 +298,8 @@ class _MainPageState extends ConsumerState<MainPage> {
               onItemSelected: (index) {
                 setState(() {
                   _selectedIndex = index;
-                  if (index == 0) {
-                    // **Fetch notes again when Notes tab is selected**
-                    if (_token != null) {
-                      ref.read(notesProvider(_token!).notifier).fetchNotes();
-                    }
+                  if (index == 0 && _token != null) {
+                    ref.read(notesProvider(_token!).notifier).fetchNotes();
                   }
                   if (index != 1) {
                     _isAddToDoVisible = false;

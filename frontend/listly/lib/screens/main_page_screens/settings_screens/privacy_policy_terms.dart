@@ -193,7 +193,7 @@ class PrivacyPolicyTermsScreen extends StatelessWidget {
             ),
             SizedBox(height: 30),
             Text(
-              "For any questions, please contact our support team at support@notepadapp.com.",
+              "For any questions, please contact our support team at listly.auth@gmail.com.",
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
