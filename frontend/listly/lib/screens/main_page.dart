@@ -1,26 +1,38 @@
+// Dart & Flutter SDK
 import 'dart:async';
+
+// Flutter packages
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
-import 'package:flashy_tab_bar2/flashy_tab_bar2.dart';
-import 'notes_screen.dart';
-import 'todo_screen.dart';
-import '../widgets/add_todo_widget.dart';
-import '../widgets/add_note_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/fab_visibility_provider.dart';
-import '../providers/tasks_provider.dart';
-import '../providers/socket_service_provider.dart';
-import '../providers/socket_service_tasks_provider.dart';
-import '../providers/notes_provider.dart';
-import '../providers/auth_providers.dart'; // Add this import
-import '../dialogs/logout_confirmation_dialog.dart';
-import 'session_expired_screen.dart'; // Import for session expiration redirection
+import 'package:flutter_zoom_drawer/flutter_zoom_drawer.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+
+// Screens
+import '../screens/main_page_screens/about_screen.dart';
 import '../screens/main_page_screens/account_screen.dart';
 import '../screens/main_page_screens/settings_screen.dart';
-import '../screens/main_page_screens/about_screen.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'notes_screen.dart';
+import 'session_expired_screen.dart';
+import 'todo_screen.dart';
+
+// Providers
+import '../providers/auth_providers.dart';
 import '../providers/connectivity_provider.dart';
+import '../providers/fab_visibility_provider.dart';
+import '../providers/notes_provider.dart';
+import '../providers/socket_service_provider.dart';
+import '../providers/socket_service_tasks_provider.dart';
+import '../providers/tasks_provider.dart';
+
+// Widgets
+import '../widgets/add_note_widget.dart';
+import '../widgets/add_todo_widget.dart';
+
+// Dialogs
+import '../dialogs/logout_confirmation_dialog.dart';
 
 class MainPage extends ConsumerStatefulWidget {
   final String userName;
@@ -40,7 +52,10 @@ class _MainPageState extends ConsumerState<MainPage> {
   bool _isSocketConnected = false;
   Timer? _tokenValidationTimer;
   final _zoomDrawerController = ZoomDrawerController();
-  bool _isListening = false; // Flag to prevent multiple listens
+  bool _isListening = false;
+  bool _isRetryingConnection = false; // Flag to prevent multiple retry attempts
+  bool _loadingAfterReconnect =
+      false; // Suppresses error messages during reconnect attempts
 
   @override
   void initState() {
@@ -49,7 +64,17 @@ class _MainPageState extends ConsumerState<MainPage> {
     _startTokenValidationTimer();
   }
 
-  Future<void> _fetchTokenAndData() async {
+  Future<void> _fetchTokenAndData({bool isRetry = false}) async {
+    final connectivityStatus =
+        await Connectivity().checkConnectivity(); // Explicit connectivity check
+    if (connectivityStatus == ConnectivityResult.none) {
+      if (!isRetry && !_loadingAfterReconnect) {
+        _showErrorSnackBar(
+            'No internet connection. Please check your connection.');
+      }
+      return;
+    }
+
     final authService = ref.read(authServiceProvider);
     String? token = await authService.getToken();
 
@@ -62,13 +87,35 @@ class _MainPageState extends ConsumerState<MainPage> {
 
       _isSocketConnected = false;
       _initializeSocketConnection();
-      _fetchTasks();
+      await _fetchTasks(
+          isRetry: isRetry); // Suppress initial error message on retry
     } else {
       _showErrorSnackBar('No authentication token found. Please log in.');
     }
   }
 
-  // Start token validation timer, only if connected
+  Future<void> _fetchTasks({bool isRetry = false}) async {
+    final connectivityStatus = await Connectivity().checkConnectivity();
+    if (connectivityStatus == ConnectivityResult.none) {
+      if (!_loadingAfterReconnect) {
+        _showErrorSnackBar('No internet connection. Unable to fetch tasks.');
+      }
+      return;
+    }
+
+    if (_token != null) {
+      try {
+        await ref.read(tasksProvider.notifier).fetchTasks(_token!);
+        _loadingAfterReconnect = false; // Reset after successful fetch
+      } catch (error) {
+        if (isRetry && !_loadingAfterReconnect) {
+          _showErrorSnackBar(error.toString());
+        }
+      }
+    }
+  }
+
+  // Start token validation timer
   void _startTokenValidationTimer() {
     _tokenValidationTimer =
         Timer.periodic(Duration(seconds: 20), (timer) async {
@@ -110,22 +157,49 @@ class _MainPageState extends ConsumerState<MainPage> {
     }
   }
 
-  Future<void> _fetchTasks() async {
-    if (_token != null) {
-      try {
-        await ref.read(tasksProvider.notifier).fetchTasks(_token!);
-      } catch (error) {
-        _showErrorSnackBar(error.toString());
+  void _handleConnectivityRestoration() async {
+    print("Internet connection restored: attempting to re-fetch data");
+
+    if (_isRetryingConnection) return;
+    _isRetryingConnection = true;
+    _loadingAfterReconnect = true; // Suppress error messages
+
+    int retryCount = 0;
+    const maxRetries = 3;
+    const initialDelay = 2; // in seconds
+
+    while (retryCount < maxRetries) {
+      await Future.delayed(Duration(
+          seconds: initialDelay * (1 << retryCount))); // Exponential backoff
+      final connectivityStatus = await Connectivity().checkConnectivity();
+
+      if (connectivityStatus != ConnectivityResult.none) {
+        try {
+          await Future.delayed(Duration(
+              seconds: 3)); // Add 3-second delay before validating token
+          await _fetchTokenAndData(
+              isRetry: true); // Attempt to fetch data after restoration
+          _startTokenValidationTimer(); // Restart the timer if it was stopped
+          _loadingAfterReconnect =
+              false; // Reset loading state after successful fetch
+          print(
+              "Tasks and notes successfully re-fetched after internet restoration.");
+          break;
+        } catch (error) {
+          print(
+              "Retry $retryCount: Error fetching data after connectivity restoration: $error");
+          if (retryCount == maxRetries - 1) {
+            _showErrorSnackBar(
+                "Error loading data after reconnecting. Please try again.");
+          }
+          retryCount++;
+        }
+      } else {
+        print("Retry $retryCount: No connectivity detected on retry.");
+        retryCount++;
       }
     }
-  }
-
-  // Handle connectivity restoration
-  void _handleConnectivityRestoration() {
-    _startTokenValidationTimer(); // Restart the timer if it was stopped
-    _initializeSocketConnection(); // Reinitialize the socket connection for notes
-    _fetchTasks(); // Refetch tasks to ensure data is up-to-date
-    print("Internet connection restored: Notes and tasks re-fetched");
+    _isRetryingConnection = false;
   }
 
   // Stop timer and handle connectivity loss
@@ -136,7 +210,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   @override
   void dispose() {
-    _tokenValidationTimer?.cancel();
+    _stopTokenValidationTimer();
     _toDoTextController.dispose();
     ref.read(socketServiceProvider).disconnect();
     ref.read(socketServiceTasksProvider).disconnect();
@@ -273,7 +347,11 @@ class _MainPageState extends ConsumerState<MainPage> {
                     : _token != null && _token!.isNotEmpty
                         ? NotesScreen(token: _token!)
                         : Center(
-                            child: CircularProgressIndicator(),
+                            child: LoadingAnimationWidget.staggeredDotsWave(
+                              color: Color(
+                                  0xFFFF725E), // Set to a color that matches your app theme
+                              size: 50,
+                            ),
                           ),
                 if (_isAddToDoVisible)
                   AddToDoWidget(

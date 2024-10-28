@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import './otp_request.dart';
 import '../services/api_service.dart';
-import '../dialogs/loading_dialog.dart'; // Import the loading dialog
+import '../dialogs/loading_dialog.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   @override
@@ -119,7 +119,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               children: [
                 SizedBox(height: screenHeight * 0.05),
                 Image.asset(
-                  'assets/images/forgot_password.png', // Replace with your image asset
+                  'assets/images/forgot_password.png',
                   width: screenWidth * 0.5,
                   height: screenHeight * 0.25,
                   fit: BoxFit.cover,
@@ -152,13 +152,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     labelText: 'Email',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       vertical: 12.0,
@@ -166,7 +164,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 5), // Space between text field and message
+                SizedBox(height: 5),
                 // Validation message
                 Text(
                   _validationMessage,
@@ -174,7 +172,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     color: _isValidEmail ? Colors.green : Colors.red,
                   ),
                 ),
-                SizedBox(height: 20), // Space before Reset button
+                SizedBox(height: 20),
                 // Reset Password button
                 SizedBox(
                   width: screenWidth * 0.8,

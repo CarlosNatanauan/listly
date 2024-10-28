@@ -5,6 +5,7 @@ import '../widgets/add_note_widget.dart';
 import 'dart:convert';
 import '../providers/socket_service_provider.dart'; // Import the SocketService provider
 import 'package:intl/intl.dart'; // Import for formatting dates and times
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class NotesScreen extends ConsumerStatefulWidget {
   final String token;
@@ -107,9 +108,11 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                       direction: DismissDirection.endToStart,
                       onDismissed: (direction) async {
                         await _deleteNoteAndEmit(note.id);
+                        /*
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Note deleted')),
                         );
+                        */
                       },
                       child: GestureDetector(
                         onTap: () {
@@ -174,7 +177,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                 );
               },
               loading: () => Center(
-                  child: CircularProgressIndicator()), // Show loading indicator
+                child: LoadingAnimationWidget.staggeredDotsWave(
+                  color: Color(
+                      0xFFFF725E), // Set to a color that matches your app theme
+                  size: 50,
+                ),
+              ), // Show loading indicator
               error: (error, stack) => Center(
                 child: Text('Error loading notes: $error'), // Show error if any
               ),

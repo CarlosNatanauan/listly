@@ -22,10 +22,9 @@ class OnboardingScreen extends StatelessWidget {
               Image.asset(
                 'assets/images/add_notes_image.png', // Replace with your image asset
                 width: screenWidth * 0.6, // Responsive width
-                height: screenHeight * 0.32, // Responsive height
                 fit: BoxFit.cover,
               ),
-              SizedBox(height: 30), // Space between image and text
+              SizedBox(height: 10), // Space between image and text
               // Big Hello
               Text(
                 'Hello!',

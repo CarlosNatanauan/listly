@@ -128,16 +128,20 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
           builder: (context) => AlertDialog(
             title: Text("Leave Password Change?"),
             content: Text(
-                "Are you sure you want to leave this session? Your progress might be lost."),
+              "Are you sure you want to leave this session? Your progress might be lost.",
+            ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // Dismiss
+                onPressed: () =>
+                    Navigator.of(context).pop(false), // Dismiss dialog
                 child: Text("No"),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(true); // Confirm and pop dialog
-                  Navigator.of(context).pop(); // Go back to the previous screen
+                  Navigator.of(context).pop(true); // Dismiss dialog
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  ); // Navigate to LoginScreen
                 },
                 child: Text("Yes"),
               ),
@@ -214,7 +218,9 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   ),
                   SizedBox(height: 20),
                   TextButton(
-                    onPressed: _onBackPressed,
+                    onPressed: () {
+                      _onBackPressed(); // Call the same onBackPressed method
+                    },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

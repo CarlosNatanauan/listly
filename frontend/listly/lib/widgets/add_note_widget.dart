@@ -117,9 +117,11 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
       // Update the current note if it matches the updated one
       _setDocumentFromJson(jsonDecode(updatedNote.content));
       titleController.text = updatedNote.title;
+      /*
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Note updated remotely')),
       );
+      */
     }
   }
 
@@ -179,6 +181,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
         FocusScope.of(context).unfocus();
 
         // Show a Snackbar to confirm the save
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Note saved successfully')),
         );

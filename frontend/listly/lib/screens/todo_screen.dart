@@ -162,9 +162,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         direction: DismissDirection.endToStart,
         onDismissed: (direction) async {
           await _deleteTask(task);
+          /*
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('${task.task} deleted')),
           );
+          */
         },
         child: Card(
           color: Colors.white, // Set the card background color to pure white
@@ -287,9 +289,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         await ref
             .read(tasksProvider.notifier)
             .updateTaskViaAPI(updatedTask, token);
+        /*    
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Task updated successfully')),
         );
+        */
         _toggleEditToDoWidget();
       } catch (error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -326,9 +330,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
       // Notify the user
       print('Task deleted successfully: ${task.id}'); // Debug statement
+      /*
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${task.task} deleted')),
       );
+      */
     } catch (error) {
       print('Error deleting task: $error'); // Debug statement
       ScaffoldMessenger.of(context).showSnackBar(
@@ -350,9 +356,11 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
 
     try {
       await ref.read(tasksProvider.notifier).updateTaskViaAPI(task, token);
+      /*
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Task updated successfully')),
       );
+      */
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating task: $error')),

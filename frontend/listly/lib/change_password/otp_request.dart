@@ -10,7 +10,7 @@ import '../screens/auth/login_screen.dart';
 class OTPRequestScreen extends StatefulWidget {
   final String email;
 
-  OTPRequestScreen({required this.email}); // Constructor to accept email
+  OTPRequestScreen({required this.email});
 
   @override
   _OTPRequestScreenState createState() => _OTPRequestScreenState();
@@ -38,7 +38,7 @@ class _OTPRequestScreenState extends State<OTPRequestScreen> {
 
   Future<void> _submitOTP() async {
     final otp = _otpControllers.map((controller) => controller.text).join();
-    print('OTP entered: $otp'); // For debugging
+    //print('OTP entered: $otp');
 
     // Show loading dialog
     showDialog(
@@ -149,7 +149,7 @@ class _OTPRequestScreenState extends State<OTPRequestScreen> {
               Navigator.of(context).pop(); // Close the dialog
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => OnboardingScreen()),
-              ); // Navigate to OnboardingScreen
+              );
             },
             child: Text("OK"),
           ),

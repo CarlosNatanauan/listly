@@ -4,6 +4,7 @@ import '../main_page.dart';
 import '../../providers/auth_providers.dart'; // Import the providers
 import '../../change_password/forgot_password.dart';
 import '../onboarding_screen.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   @override
@@ -72,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 16.0,
-              vertical: 30.0,
+              vertical: 10.0,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -80,11 +81,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Image at the top
                 Image.asset(
                   'assets/images/login_image.png',
-                  width: screenWidth * 0.6,
-                  height: screenHeight * 0.22,
+                  width: screenWidth * 0.5,
                   fit: BoxFit.cover,
                 ),
-                SizedBox(height: 30), // Space between image and text
+                SizedBox(height: 10), // Space between image and text
                 // Big Login Text
                 Text(
                   'Login',
@@ -171,7 +171,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 if (_isLoading)
-                  CircularProgressIndicator(), // Loading indicator
+                  LoadingAnimationWidget.staggeredDotsWave(
+                    color: Color(
+                        0xFFFF725E), // Set to a color that matches your app theme
+                    size: 50,
+                  ), // Loading indicator
                 SizedBox(height: 10), // Space before button
                 // Login button
                 SizedBox(

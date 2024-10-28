@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'login_screen.dart';
-import '../../providers/auth_providers.dart'; // Import the providers
+import '../../providers/auth_providers.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   @override
@@ -13,6 +14,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
+  bool _isEmailValid = false;
+  bool _isUsernameValid = false;
+  bool _isPasswordValid = false;
+  String _emailValidationMessage = '';
+  String _usernameValidationMessage = '';
 
   void _register() async {
     final username = _usernameController.text.trim();
@@ -23,11 +30,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       _isLoading = true;
     });
 
-    final authService = ref.read(authServiceProvider); // Access authService
+    final authService = ref.read(authServiceProvider);
     try {
       final response = await authService.register(username, email, password);
-      if (response) {
-        // After successful registration, go back to login screen
+      if (response && mounted) {
+        // Check if the widget is still mounted
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => LoginScreen()),
         );
@@ -36,69 +43,120 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ));
       }
     } catch (e) {
-      // Handle errors like duplicate username or email
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Error'),
-            content: Text(e.toString()), // Display the custom error message
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text('Error'),
+              content: Text(e.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _validateEmail(String value) {
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+
+    setState(() {
+      if (value.isEmpty) {
+        _emailValidationMessage = '';
+        _isEmailValid = false;
+      } else if (!emailRegex.hasMatch(value)) {
+        _emailValidationMessage = 'Please enter a valid email address';
+        _isEmailValid = false;
+      } else {
+        _emailValidationMessage = 'Email is valid';
+        _isEmailValid = true;
+      }
+    });
+  }
+
+  void _validateUsername(String value) {
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$'); // Alphanumeric check
+
+    setState(() {
+      if (value.length > 8) {
+        // Truncate to 8 characters if exceeded
+        _usernameController.text = value.substring(0, 8);
+        _usernameController.selection = TextSelection.fromPosition(
+            TextPosition(offset: _usernameController.text.length));
+      }
+
+      if (value.isEmpty) {
+        _usernameValidationMessage = '';
+        _isUsernameValid = false;
+      } else if (value.length < 8) {
+        _usernameValidationMessage = 'Username must be 8 characters';
+        _isUsernameValid = false;
+      } else if (!usernameRegex.hasMatch(value)) {
+        _usernameValidationMessage =
+            'Username can only contain letters and numbers';
+        _isUsernameValid = false;
+      } else {
+        _usernameValidationMessage = 'Username is valid';
+        _isUsernameValid = true;
+      }
+    });
+  }
+
+  void _validatePassword(String value) {
+    setState(() {
+      if (value.length >= 8) {
+        _isPasswordValid = true;
+      } else {
+        _isPasswordValid = false;
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width and height
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 0, // Remove the AppBar shadow if desired
+        elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pop(); // Navigate back to the previous screen
+            Navigator.of(context).pop();
           },
         ),
-        title: null, // Remove the title from the AppBar
       ),
       body: GestureDetector(
         onTap: () {
-          FocusScope.of(context)
-              .unfocus(); // Dismiss the keyboard when tapping outside
+          FocusScope.of(context).unfocus();
         },
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16.0, vertical: 30.0), // Added padding
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Image at the top
                 Image.asset(
-                  'assets/images/sign_up_image.png', // Replace with your image asset
-                  width: screenWidth * 0.6, // Responsive width
-                  height: screenHeight * 0.32, // Responsive height
+                  'assets/images/sign_up_image.png',
+                  width: screenWidth * 0.5,
                   fit: BoxFit.cover,
                 ),
-                SizedBox(height: 30), // Space between image and text
-                // Big Register Text
+                SizedBox(height: 10),
                 Text(
                   'Register',
                   style: TextStyle(
@@ -106,98 +164,138 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       fontWeight: FontWeight.bold,
                       color: Colors.black54),
                 ),
-                SizedBox(height: 10), // Space between texts
-                // Username TextField
+                SizedBox(height: 10),
+
+                // Username TextField with validation
                 TextField(
                   controller: _usernameController,
+                  onChanged: _validateUsername,
+                  maxLength: 8, // Limit to 8 characters
                   decoration: InputDecoration(
                     labelText: 'Username',
+                    counterText: '', // Hides the max length counter
                     border: OutlineInputBorder(
-                      // Add border style
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
-                    contentPadding: EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 16.0), // Padding inside TextField
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                   ),
                 ),
-                SizedBox(height: 10), // Space between text fields
-                // Email TextField
+                SizedBox(height: 10),
+
+                // Email TextField with validation
                 TextField(
                   controller: _emailController,
+                  onChanged: _validateEmail,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(
-                      // Add border style
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
-                    contentPadding: EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 16.0), // Padding inside TextField
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                   ),
                 ),
-                SizedBox(height: 10), // Space between text fields
-                // Password TextField
+                SizedBox(height: 10),
+
+                // Password TextField with visibility toggle
                 TextField(
                   controller: _passwordController,
+                  onChanged: _validatePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
                     border: OutlineInputBorder(
-                      // Add border style
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
-                    contentPadding: EdgeInsets.symmetric(
-                        vertical: 12.0,
-                        horizontal: 16.0), // Padding inside TextField
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                   ),
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                 ),
-                SizedBox(height: 20), // Space before button
+                SizedBox(height: 20),
+
                 if (_isLoading)
-                  CircularProgressIndicator(), // Loading indicator
-                SizedBox(height: 20), // Space before button
+                  LoadingAnimationWidget.staggeredDotsWave(
+                    color: Color(0xFFFF725E),
+                    size: 50,
+                  ),
+
                 // Register button
                 SizedBox(
-                  width: screenWidth * 0.8, // Set width based on screen width
+                  width: screenWidth * 0.8,
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _register,
+                    onPressed: _isEmailValid &&
+                            _isUsernameValid &&
+                            _isPasswordValid &&
+                            !_isLoading
+                        ? _register
+                        : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF725E), // Custom color
-                      foregroundColor: Colors.white, // Text color
-                      padding: EdgeInsets.symmetric(
-                          vertical: 13.0), // Same vertical padding
+                      backgroundColor:
+                          _isEmailValid && _isUsernameValid && _isPasswordValid
+                              ? Color(0xFFFF725E)
+                              : Colors.grey,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 13.0),
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded edges
+                        borderRadius: BorderRadius.circular(15),
                       ),
-                      elevation: 5, // Shadow effect
+                      elevation: 5,
                     ),
                     child: Text(
                       'Register',
-                      style: TextStyle(fontSize: 20), // Consistent text size
+                      style: TextStyle(fontSize: 20),
                     ),
                   ),
+                ),
+                SizedBox(height: 10),
+
+                // Validation messages below button
+                Column(
+                  children: [
+                    Text(
+                      _usernameValidationMessage,
+                      style: TextStyle(
+                        color: _isUsernameValid ? Colors.green : Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      _emailValidationMessage,
+                      style: TextStyle(
+                        color: _isEmailValid ? Colors.green : Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

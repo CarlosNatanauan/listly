@@ -9,7 +9,7 @@ class SocketService {
   void connect(String token, Function(Note) onNoteUpdate) {
     disconnect(); // Ensure any previous connection is closed before reconnecting
 
-    socket = IO.io('http://192.168.0.111:5000', <String, dynamic>{
+    socket = IO.io('https://listly-ocau.onrender.com', <String, dynamic>{
       'transports': ['websocket'],
       'extraHeaders': {'Authorization': 'Bearer $token'},
     });

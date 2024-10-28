@@ -6,7 +6,7 @@ class SocketServiceTasks {
 
   void connect(String token, Function(Map<String, dynamic>) onTaskUpdate) {
     print('Connecting to socket with token: $token'); // Debug statement
-    socket = IO.io('http://192.168.0.111:5000', <String, dynamic>{
+    socket = IO.io('https://listly-ocau.onrender.com', <String, dynamic>{
       'transports': ['websocket'],
       'extraHeaders': {'Authorization': 'Bearer $token'},
     });

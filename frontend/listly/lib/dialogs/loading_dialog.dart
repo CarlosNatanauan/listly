@@ -1,5 +1,6 @@
 //loading_dialog.dart
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class LoadingDialog extends StatelessWidget {
   final String message;
@@ -20,7 +21,11 @@ class LoadingDialog extends StatelessWidget {
           ),
           child: Row(
             children: [
-              CircularProgressIndicator(),
+              LoadingAnimationWidget.threeRotatingDots(
+                color: Color(
+                    0xFFFF725E), // Set to a color that matches your app theme
+                size: 25,
+              ),
               SizedBox(width: 20),
               Expanded(child: Text(message, style: TextStyle(fontSize: 16))),
             ],
