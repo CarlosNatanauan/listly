@@ -41,7 +41,6 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       await ApiService.submitFeedback(
           rating!, additionalComments, widget.token);
 
-      // Dismiss the loading dialog
       Navigator.of(context).pop();
 
       // Reset fields and show the thank-you overlay
@@ -214,7 +213,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                               rating = null;
                               additionalComments = "";
                               _commentsController.clear();
-                              showThankYouOverlay = false; // Close overlay
+                              showThankYouOverlay = false;
                             });
                           },
                         ),

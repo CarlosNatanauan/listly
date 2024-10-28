@@ -42,7 +42,7 @@ class _NoInternetScreenState extends State<NoInternetScreen> {
 
   @override
   void dispose() {
-    _connectivitySubscription.cancel(); // Ensure we cancel the subscription
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 

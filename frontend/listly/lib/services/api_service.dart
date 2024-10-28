@@ -1,12 +1,11 @@
 //api_service.dart
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../models/todo.dart'; // Import your ToDo model
-import '../models/note.dart'; // Import your ToDo model
+import '../models/todo.dart';
+import '../models/note.dart';
 
 class ApiService {
-  static const String _baseUrl =
-      'https://listly-ocau.onrender.com'; // Backend API URL
+  static const String _baseUrl = 'https://listly-ocau.onrender.com';
 
   // New method to get the passwordChangedAt timestamp
   static Future<dynamic> getPasswordChangedAt(String token) async {
@@ -111,8 +110,8 @@ class ApiService {
       }),
     );
 
-    print('Update response status: ${response.statusCode}'); // Log status
-    print('Update response body: ${response.body}'); // Log body
+    print('Update response status: ${response.statusCode}');
+    print('Update response body: ${response.body}');
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update task: ${response.body}');
@@ -143,7 +142,7 @@ class ApiService {
     final response = await http.delete(
       Uri.parse('$_baseUrl/tasks/$taskId'),
       headers: {
-        'Authorization': 'Bearer $token', // Include token for authentication
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
@@ -176,10 +175,10 @@ class ApiService {
   //Saving notes
   static Future<Note> saveNote(Note note, String token) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/notes'), // Adjust to your backend URL
+      Uri.parse('$_baseUrl/notes'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token', // Include authorization token
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
         'title': note.title,
@@ -188,8 +187,7 @@ class ApiService {
     );
 
     if (response.statusCode == 201) {
-      return Note.fromJson(
-          jsonDecode(response.body)); // Convert the saved note to Note object
+      return Note.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to save note');
     }
@@ -197,10 +195,10 @@ class ApiService {
 
   static Future<Note> updateNote(Note note, String token) async {
     final response = await http.put(
-      Uri.parse('$_baseUrl/notes/${note.id}'), // Use note ID in the URL
+      Uri.parse('$_baseUrl/notes/${note.id}'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token', // Include authorization token
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
         'title': note.title,
@@ -218,9 +216,9 @@ class ApiService {
 
   static Future<void> deleteNote(String noteId, String token) async {
     final response = await http.delete(
-      Uri.parse('$_baseUrl/notes/$noteId'), // Adjust to your backend URL
+      Uri.parse('$_baseUrl/notes/$noteId'),
       headers: {
-        'Authorization': 'Bearer $token', // Include token for authentication
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
@@ -252,8 +250,7 @@ class ApiService {
   // Method to verify OTP
   static Future<dynamic> verifyOtp(String email, String otp) async {
     final response = await http.post(
-      Uri.parse(
-          '$_baseUrl/auth/verify-otp'), // Replace with your actual endpoint
+      Uri.parse('$_baseUrl/auth/verify-otp'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({'email': email, 'otp': otp}),
     );
@@ -269,7 +266,7 @@ class ApiService {
 
   static Future<void> changePassword(String email, String newPassword) async {
     final response = await http.post(
-      Uri.parse('$_baseUrl/auth/change-password'), // Make sure this is correct
+      Uri.parse('$_baseUrl/auth/change-password'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -304,14 +301,13 @@ class ApiService {
   }
 
   //for feedback
-  // api_service.dart
 
   static Future<void> submitFeedback(
       int rating, String additionalComments, String token) async {
     final response = await http.post(
       Uri.parse('$_baseUrl/feedback/submit'),
       headers: {
-        'Authorization': 'Bearer $token', // Include the user token
+        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
       body: jsonEncode({

@@ -20,7 +20,7 @@ class AccountScreen extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pop(); // Go back to MainPage
+            Navigator.of(context).pop();
           },
         ),
         title: Text(
@@ -81,7 +81,7 @@ class AccountScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Text(
-                email, // Display logged-in email
+                email, 
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.black54,
@@ -151,15 +151,15 @@ class AccountScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFFFF725E), // Red color for delete
-                  foregroundColor: Colors.white, // Text color
+                  backgroundColor: Color(0xFFFF725E), 
+                  foregroundColor: Colors.white, 
                   padding: EdgeInsets.symmetric(
                     vertical: 13.0,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15), // Rounded edges
+                    borderRadius: BorderRadius.circular(15), 
                   ),
-                  elevation: 5, // Shadow effect
+                  elevation: 5, 
                 ),
                 child: Text(
                   'Delete Account',

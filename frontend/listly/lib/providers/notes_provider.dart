@@ -5,7 +5,6 @@ import '../services/socket_service_notes.dart';
 import '../models/note.dart';
 import '../providers/socket_service_provider.dart';
 
-// Define a StateNotifier to manage the notes state
 class NotesNotifier extends StateNotifier<AsyncValue<List<Note>>> {
   final String token;
   final SocketService socketService; // Add socket service

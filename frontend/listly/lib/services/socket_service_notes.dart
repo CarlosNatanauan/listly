@@ -3,7 +3,7 @@ import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/note.dart';
 
 class SocketService {
-  IO.Socket? socket; // Optional to check if the socket exists
+  IO.Socket? socket;
 
   // Connect method to accept a callback
   void connect(String token, Function(Note) onNoteUpdate) {
@@ -20,7 +20,7 @@ class SocketService {
 
     socket!.on('noteUpdated', (data) {
       Note updatedNote = Note.fromJson(data);
-      onNoteUpdate(updatedNote); // Pass updated note to the callback
+      onNoteUpdate(updatedNote);
     });
 
     socket!.on('disconnect', (_) {
@@ -31,7 +31,7 @@ class SocketService {
   void disconnect() {
     if (socket != null && socket!.connected) {
       socket!.disconnect();
-      socket = null; // Reset the socket instance
+      socket = null;
     }
   }
 
@@ -43,7 +43,7 @@ class SocketService {
   }
 
   void emitNoteUpdate(Map<String, dynamic> note) {
-    String noteId = note['_id'] ?? ''; // Ensure '_id' exists in the note data
+    String noteId = note['_id'] ?? '';
     socket!.emit('noteUpdated_$noteId', note);
   }
 }

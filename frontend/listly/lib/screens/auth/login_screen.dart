@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../main_page.dart';
-import '../../providers/auth_providers.dart'; // Import the providers
+import '../../providers/auth_providers.dart';
 import '../../change_password/forgot_password.dart';
 import '../onboarding_screen.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -85,7 +85,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   fit: BoxFit.cover,
                 ),
                 SizedBox(height: 10), // Space between image and text
-                // Big Login Text
                 Text(
                   'Login',
                   style: TextStyle(
@@ -94,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     color: Colors.black54,
                   ),
                 ),
-                SizedBox(height: 10), // Space between texts
+                SizedBox(height: 10),
                 // Username TextField
                 TextField(
                   controller: _usernameController,
@@ -114,7 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 10), // Space between text fields
+                SizedBox(height: 10),
                 // Password TextField with reveal password icon
                 TextField(
                   controller: _passwordController,
@@ -159,7 +158,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           builder: (context) => ForgotPasswordScreen(),
                         ),
                       );
-                      // Print statement
                     },
                     child: Text(
                       'Forgot Password?',
@@ -172,31 +170,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 if (_isLoading)
                   LoadingAnimationWidget.staggeredDotsWave(
-                    color: Color(
-                        0xFFFF725E), // Set to a color that matches your app theme
+                    color: Color(0xFFFF725E),
                     size: 50,
-                  ), // Loading indicator
-                SizedBox(height: 10), // Space before button
+                  ),
+                SizedBox(height: 10),
                 // Login button
                 SizedBox(
-                  width: screenWidth * 0.8, // Set width based on screen width
+                  width: screenWidth * 0.8,
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF725E), // Custom color
-                      foregroundColor: Colors.white, // Text color
+                      backgroundColor: Color(0xFFFF725E),
+                      foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
                         vertical: 13.0,
                       ), // Same vertical padding
                       shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded edges
+                        borderRadius: BorderRadius.circular(15),
                       ),
                       elevation: 5, // Shadow effect
                     ),
                     child: Text(
                       'Login',
-                      style: TextStyle(fontSize: 20), // Consistent text size
+                      style: TextStyle(fontSize: 20),
                     ),
                   ),
                 ),

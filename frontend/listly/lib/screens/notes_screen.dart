@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/notes_provider.dart';
 import '../widgets/add_note_widget.dart';
 import 'dart:convert';
-import '../providers/socket_service_provider.dart'; // Import the SocketService provider
-import 'package:intl/intl.dart'; // Import for formatting dates and times
+import '../providers/socket_service_provider.dart';
+import 'package:intl/intl.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 
 class NotesScreen extends ConsumerStatefulWidget {
@@ -35,8 +35,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
-      backgroundColor:
-          Color.fromARGB(248, 248, 248, 248), // Screen background color
+      backgroundColor: Color.fromARGB(248, 248, 248, 248),
       body: Column(
         children: [
           Padding(
@@ -66,8 +65,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                           .toLowerCase()
                           .contains(_searchQuery.toLowerCase());
                 }).toList()
-                  ..sort((a, b) =>
-                      b.createdAt.compareTo(a.createdAt)); // Sort by createdAt
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
                 // Check if there are no notes after filtering
                 if (filteredNotes.isEmpty) {
@@ -80,9 +78,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                           width: screenWidth * 0.4,
                           fit: BoxFit.cover,
                         ),
-                        SizedBox(
-                            height:
-                                10), // Add spacing between the image and text
+                        SizedBox(height: 10),
                         Text(
                           'No Notes available. Add one!',
                           style: TextStyle(fontSize: 16, color: Colors.grey),
@@ -132,8 +128,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
                           width: double.infinity,
                           constraints: BoxConstraints(minHeight: 100),
                           child: Card(
-                            color: Colors
-                                .white, // Set the card background color to pure white
+                            color: Colors.white,
                             elevation: .5,
                             margin: const EdgeInsets.symmetric(
                                 vertical: 8, horizontal: 16),
@@ -178,13 +173,12 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
               },
               loading: () => Center(
                 child: LoadingAnimationWidget.staggeredDotsWave(
-                  color: Color(
-                      0xFFFF725E), // Set to a color that matches your app theme
+                  color: Color(0xFFFF725E),
                   size: 50,
                 ),
               ), // Show loading indicator
               error: (error, stack) => Center(
-                child: Text('Error loading notes: $error'), // Show error if any
+                child: Text('Error loading notes: $error'),
               ),
             ),
           ),
@@ -195,7 +189,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   // Format Date and Time for the card display
   String _formatDateTime(DateTime dateTime) {
-    final formatter = DateFormat('yyyy-MM-dd HH:mm:ss'); // Customize the format
+    final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
     return formatter.format(dateTime);
   }
 
@@ -206,8 +200,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
     try {
       await notesNotifier.deleteNote(noteId);
-      socketService.emitNoteUpdate(
-          {'id': noteId, 'deleted': true}); // Emit delete event via socket
+      socketService.emitNoteUpdate({'id': noteId, 'deleted': true});
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete note: ${e.toString()}')),
@@ -239,8 +232,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
       child: Card(
-        color: Color.fromARGB(
-            238, 243, 243, 243), // Set the search bar background to pure white
+        color: Color.fromARGB(238, 243, 243, 243),
         elevation: .5,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),

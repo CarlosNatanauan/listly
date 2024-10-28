@@ -22,8 +22,7 @@ class LoadingDialog extends StatelessWidget {
           child: Row(
             children: [
               LoadingAnimationWidget.threeRotatingDots(
-                color: Color(
-                    0xFFFF725E), // Set to a color that matches your app theme
+                color: Color(0xFFFF725E),
                 size: 25,
               ),
               SizedBox(width: 20),

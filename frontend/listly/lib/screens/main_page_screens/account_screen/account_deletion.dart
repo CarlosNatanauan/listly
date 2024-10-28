@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../dialogs/loading_dialog.dart'; // Import the LoadingDialog
-import '../../../services/api_service.dart'; // Import your ApiService
+import '../../../dialogs/loading_dialog.dart';
+import '../../../services/api_service.dart';
 
 class AccountDeletion extends StatelessWidget {
   final String email;
@@ -17,7 +17,7 @@ class AccountDeletion extends StatelessWidget {
     );
     await ApiService.deleteAccount(email, token);
 
-    await Future.delayed(Duration(seconds: 5)); // Wait for 5 seconds
+    await Future.delayed(Duration(seconds: 5));
   }
 
   @override

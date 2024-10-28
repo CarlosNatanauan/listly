@@ -2,29 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:fleather/fleather.dart';
 import 'package:flutter/services.dart';
 import 'package:parchment_delta/parchment_delta.dart';
-import '../models/note.dart'; // Import your Note model
+import '../models/note.dart';
 import 'dart:convert';
 import '../providers/notes_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
-import '../services/socket_service_notes.dart'; // Import SocketService
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/socket_service_notes.dart';
 import '../providers/socket_service_provider.dart';
-import '../providers/auth_providers.dart'; // Import the AuthService provider
+import '../providers/auth_providers.dart';
 
 class AddNoteWidget extends ConsumerWidget {
-  final Note? note; // Keep 'note' here as final
+  final Note? note;
 
   const AddNoteWidget({Key? key, this.note}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _AddNoteWidgetContent(
-        note: note, ref: ref); // Pass ref to the content
+    return _AddNoteWidgetContent(note: note, ref: ref);
   }
 }
 
 class _AddNoteWidgetContent extends StatefulWidget {
   final Note? note;
-  final WidgetRef ref; // Add reference to WidgetRef
+  final WidgetRef ref;
 
   const _AddNoteWidgetContent({Key? key, this.note, required this.ref})
       : super(key: key);
@@ -39,27 +38,25 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
   String? _token;
   Note? _currentNote;
   late SocketService socketService;
-  bool isEditing = false; // Track if the note is in edit mode
+  bool isEditing = false;
 
   @override
   void initState() {
     super.initState();
     _currentNote = widget.note;
     _getToken();
-    socketService = widget.ref
-        .read(socketServiceProvider); // Get the globally initialized socket
+    socketService = widget.ref.read(socketServiceProvider);
 
-    // Initialize title and content if editing an existing note
     if (_currentNote != null) {
       titleController.text = _currentNote!.title;
       if (_currentNote!.content.isNotEmpty) {
         dynamic content = jsonDecode(_currentNote!.content);
         _setDocumentFromJson(content);
       }
-      isEditing = true; // Set to editing mode after initialization
-      _listenForNoteUpdates(); // Listen for updates
+      isEditing = true;
+      _listenForNoteUpdates();
     } else {
-      _initController(); // Call only when adding a new note (not editing)
+      _initController();
     }
   }
 
@@ -77,7 +74,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
       _controller = FleatherController(document: doc);
     } catch (err, st) {
       print('Cannot read welcome.json: $err\n$st');
-      _controller = FleatherController(); // Initialize with an empty document
+      _controller = FleatherController();
     }
     setState(() {});
   }
@@ -105,8 +102,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
     _token = await authService.getToken();
 
     if (_token != null) {
-      socketService.connect(
-          _token!, _handleNoteUpdate); // Pass the token and callback function
+      socketService.connect(_token!, _handleNoteUpdate);
     } else {
       print('Token not found, unable to connect to socket.');
     }
@@ -114,14 +110,8 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
 
   void _handleNoteUpdate(Note updatedNote) {
     if (_currentNote != null && _currentNote!.id == updatedNote.id) {
-      // Update the current note if it matches the updated one
       _setDocumentFromJson(jsonDecode(updatedNote.content));
       titleController.text = updatedNote.title;
-      /*
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Note updated remotely')),
-      );
-      */
     }
   }
 
@@ -132,70 +122,99 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
   }
 
   void _saveOrUpdateNote() async {
-    final title = titleController.text.isEmpty
-        ? ''
-        : titleController.text; // Ensure there's always a title
+    final title = titleController.text.isEmpty ? '' : titleController.text;
     final content = _controller?.document;
-
-    // Check if content is null, otherwise use an empty document
     String contentJson = content != null ? jsonEncode(content.toJson()) : '[]';
-
-    print('Saving note with title: $title');
-    print('Content JSON: $contentJson');
 
     if (_token != null) {
       try {
-        // Check if we're editing an existing note or adding a new one
         final isEditingNow =
             _currentNote != null && _currentNote!.id.isNotEmpty;
 
-        // Create the note object, ensuring all fields are non-null
         final note = Note(
-          id: isEditingNow
-              ? _currentNote!.id
-              : '', // Retain the note's ID if editing, otherwise create new note with empty ID
+          id: isEditingNow ? _currentNote!.id : '',
           title: title.isEmpty ? '' : title,
           content: contentJson.isEmpty ? '[]' : contentJson,
           createdAt: isEditingNow ? _currentNote!.createdAt : DateTime.now(),
         );
 
-        // Log the note details for debugging
-        print(
-            'Saving note with id: ${note.id}, title: ${note.title}, content: ${note.content}');
-
-        // Save or update the note via your provider
         final notesNotifier = widget.ref.read(notesProvider(_token!).notifier);
         final updatedNote = await notesNotifier.addOrUpdateNote(note);
 
-        // After saving, update _currentNote with the returned note (including the new ID if it was a new note)
         setState(() {
-          _currentNote = updatedNote; // Update with the saved note
-          isEditing = true; // Always in editing mode after the first save
+          _currentNote = updatedNote;
+          isEditing = true;
         });
 
-        // Emit the note update to other devices via Socket.IO
-        final emittedNote = _currentNote!.toJson(); // Use updated note
-        socketService.emitNoteUpdate(emittedNote);
+        socketService.emitNoteUpdate(_currentNote!.toJson());
 
-        // Dismiss the keyboard after saving
         FocusScope.of(context).unfocus();
-
-        // Show a Snackbar to confirm the save
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Note saved successfully')),
         );
       } catch (e) {
-        // Handle any errors and show a message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to save note: ${e.toString()}')),
         );
-        print('Error saving note: $e');
       }
     } else {
-      // Handle the case when the user is not authenticated
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('User is not authenticated')),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteNote() async {
+    // Show a confirmation dialog before deleting
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Note'),
+          content: Text(
+              'Are you sure you want to delete this note? This action cannot be undone.'),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: Text('Delete', style: TextStyle(color: Color(0xFFFF725E))),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    // If the user confirmed deletion, proceed to delete the note
+    if (shouldDelete == true) {
+      _deleteNote();
+    }
+  }
+
+  Future<void> _deleteNote() async {
+    if (_currentNote == null || _currentNote!.id.isEmpty) return;
+
+    try {
+      final notesNotifier = widget.ref.read(notesProvider(_token!).notifier);
+      await notesNotifier.deleteNote(_currentNote!.id);
+
+      socketService.emitNoteUpdate({'id': _currentNote!.id, 'deleted': true});
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Note deleted successfully')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete note: ${e.toString()}')),
       );
     }
   }
@@ -217,6 +236,12 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
             icon: Icon(Icons.save),
             onPressed: _saveOrUpdateNote,
             tooltip: 'Save Note',
+          ),
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: isEditing ? _confirmDeleteNote : null,
+            tooltip: 'Delete Note',
+            color: isEditing ? Color.fromARGB(255, 165, 46, 31) : Colors.grey,
           ),
         ],
       ),

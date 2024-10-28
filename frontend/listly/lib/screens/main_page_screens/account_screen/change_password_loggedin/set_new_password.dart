@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:listly/screens/onboarding_screen.dart';
 import '../../../../services/api_service.dart';
 import '../../../../dialogs/loading_dialog.dart';
 import '../../account_screen.dart';
 import '../../../../providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../auth/login_screen.dart';
 import '../../../../providers/socket_service_provider.dart';
 import '../../../../providers/socket_service_tasks_provider.dart';
 
@@ -65,11 +63,11 @@ class _SetNewPasswordScreenState
     try {
       print("Calling API with email: ${widget.email} and password: $password");
       await ApiService.changePassword(widget.email, password);
-      Navigator.of(context).pop(); // Dismiss loading dialog
-      _logoutUser(); // Call logout method after successful password change
+      Navigator.of(context).pop();
+      _logoutUser(); 
     } catch (e) {
-      Navigator.of(context).pop(); // Dismiss loading dialog
-      print("Error occurred: $e"); // Print the error for debugging
+      Navigator.of(context).pop(); 
+      print("Error occurred: $e"); 
 
       if (e
           .toString()
@@ -91,7 +89,7 @@ class _SetNewPasswordScreenState
     final authService = ref.read(authServiceProvider);
     await authService.logout(); // Logout the current user
 
-    await Future.delayed(Duration(seconds: 5)); // Wait for 15 seconds
+    await Future.delayed(Duration(seconds: 5)); 
     // Disconnect any socket connections
     ref.read(socketServiceProvider).disconnect();
     ref.read(socketServiceTasksProvider).disconnect();
@@ -107,7 +105,7 @@ class _SetNewPasswordScreenState
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.of(context).pop(); // Dismiss the error dialog
+              Navigator.of(context).pop(); 
             },
             child: Text("OK"),
           ),
@@ -126,12 +124,12 @@ class _SetNewPasswordScreenState
             actions: [
               TextButton(
                 onPressed: () =>
-                    Navigator.of(context).pop(false), // Dismiss the dialog
+                    Navigator.of(context).pop(false), 
                 child: Text("No"),
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.of(context).pop(true); // Confirm and close dialog
+                  Navigator.of(context).pop(true); 
 
                   final authService = ref.read(authServiceProvider);
                   final user = authService.currentUser;
@@ -141,9 +139,9 @@ class _SetNewPasswordScreenState
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => AccountScreen(
-                          username: user.username, // Pass username
-                          email: user.email, // Pass email
-                          token: token, // Pass token
+                          username: user.username, 
+                          email: user.email, 
+                          token: token, 
                         ),
                       ),
                     );
@@ -158,7 +156,7 @@ class _SetNewPasswordScreenState
             ],
           ),
         ) ??
-        false; // Default to false if dialog is dismissed
+        false; 
   }
 
   @override
@@ -173,7 +171,7 @@ class _SetNewPasswordScreenState
     final screenWidth = MediaQuery.of(context).size.width;
 
     return WillPopScope(
-      onWillPop: _onBackPressed, // Override the back button behavior
+      onWillPop: _onBackPressed, 
       child: Scaffold(
         body: GestureDetector(
           onTap: () {
@@ -231,7 +229,7 @@ class _SetNewPasswordScreenState
                   TextButton(
                     onPressed: () async {
                       final shouldLeave =
-                          await _onBackPressed(); // Show the warning dialog
+                          await _onBackPressed(); 
                       if (shouldLeave) {
                         final authService = ref.read(authServiceProvider);
                         final user = authService.currentUser;
@@ -244,7 +242,7 @@ class _SetNewPasswordScreenState
                               builder: (context) => AccountScreen(
                                 username: user.username,
                                 email: user.email,
-                                token: token, // Pass the token here
+                                token: token, 
                               ),
                             ),
                           );

@@ -7,7 +7,7 @@ import '../../../../providers/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ForgotPasswordScreenInside extends ConsumerStatefulWidget {
-  final String email; // Accept email as a parameter
+  final String email;
 
   ForgotPasswordScreenInside({required this.email});
 
@@ -23,13 +23,12 @@ class _ForgotPasswordScreenState
   @override
   void initState() {
     super.initState();
-    // Initialize the _emailController with the passed email
     _emailController = TextEditingController(text: widget.email);
   }
 
   Future<void> _resetPassword(BuildContext context) async {
     final email = _emailController.text.trim();
-    print('Reset password for email: $email'); // For debugging
+    print('Reset password for email: $email');
 
     // Show loading dialog with a more professional message
     showDialog(
@@ -44,7 +43,7 @@ class _ForgotPasswordScreenState
       final response = await ApiService.requestOtp(email);
 
       // Close the loading dialog after API call
-      Navigator.of(context).pop(); // Close the loading dialog
+      Navigator.of(context).pop();
 
       // If successful, navigate to OTPRequestScreen
       if (response['message'] == 'OTP sent') {
@@ -115,7 +114,7 @@ class _ForgotPasswordScreenState
               children: [
                 SizedBox(height: screenHeight * 0.05),
                 Image.asset(
-                  'assets/images/forgot_password.png', // Replace with your image asset
+                  'assets/images/forgot_password.png',
                   width: screenWidth * 0.5,
                   height: screenHeight * 0.25,
                   fit: BoxFit.cover,
@@ -143,18 +142,16 @@ class _ForgotPasswordScreenState
                 // Email TextField
                 TextField(
                   controller: _emailController,
-                  enabled: false, // Disable the TextField
+                  enabled: false,
                   decoration: InputDecoration(
                     labelText: 'Email',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          BorderSide(color: Color(0xFFFF725E)), // Border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: Color(0xFFFF725E)), // Focused border color
+                      borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       vertical: 12.0,
@@ -162,13 +159,13 @@ class _ForgotPasswordScreenState
                     ),
                   ),
                 ),
-                SizedBox(height: 20), // Space before Reset button
+                SizedBox(height: 20),
                 // Reset Password button
                 SizedBox(
                   width: screenWidth * 0.8,
                   child: ElevatedButton(
                     onPressed: () {
-                      _resetPassword(context); // Call reset password method
+                      _resetPassword(context);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFFF725E),
@@ -187,23 +184,23 @@ class _ForgotPasswordScreenState
                     ),
                   ),
                 ),
-                SizedBox(height: 20), // Space before back to Account
+                SizedBox(height: 20),
                 // Back to Account clickable text
                 TextButton(
                   onPressed: () async {
-                    Navigator.of(context).pop(true); // Confirm and close dialog
+                    Navigator.of(context).pop(true);
 
                     final authService = ref.read(authServiceProvider);
                     final user = authService.currentUser;
-                    final token = await authService.getToken(); // Fetch token
+                    final token = await authService.getToken();
 
                     if (user != null && token != null) {
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (context) => AccountScreen(
-                            username: user.username, // Pass username
-                            email: user.email, // Pass email
-                            token: token, // Pass token
+                            username: user.username,
+                            email: user.email,
+                            token: token,
                           ),
                         ),
                       );

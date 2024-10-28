@@ -166,7 +166,7 @@ class _MainPageState extends ConsumerState<MainPage> {
 
     int retryCount = 0;
     const maxRetries = 3;
-    const initialDelay = 2; // in seconds
+    const initialDelay = 1; // in seconds
 
     while (retryCount < maxRetries) {
       await Future.delayed(Duration(
@@ -348,8 +348,7 @@ class _MainPageState extends ConsumerState<MainPage> {
                         ? NotesScreen(token: _token!)
                         : Center(
                             child: LoadingAnimationWidget.staggeredDotsWave(
-                              color: Color(
-                                  0xFFFF725E), // Set to a color that matches your app theme
+                              color: Color(0xFFFF725E),
                               size: 50,
                             ),
                           ),
@@ -493,17 +492,17 @@ class MenuScreen extends ConsumerWidget {
           ),
           onTap: () async {
             final authService = ref.read(authServiceProvider);
-            final user = authService.currentUser; // Get the current user
-            final token = await authService.getToken(); // Fetch the token
+            final user = authService.currentUser;
+            final token = await authService.getToken();
 
             if (index == 0 && user != null && token != null) {
               // Navigate to AccountScreen with user and token
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => AccountScreen(
-                    username: user.username, // Pass the username
-                    email: user.email, // Pass the email
-                    token: token, // Pass the token
+                    username: user.username,
+                    email: user.email,
+                    token: token,
                   ),
                 ),
               );
@@ -515,8 +514,8 @@ class MenuScreen extends ConsumerWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => SettingsScreen(
-                    email: user.email, // Use the non-null email
-                    token: token, // Use the non-null token
+                    email: user.email,
+                    token: token,
                   ),
                 ),
               );

@@ -58,7 +58,7 @@ class EditToDoWidget extends StatelessWidget {
             SizedBox(height: 16),
             // Align the Save button to the right
             Row(
-              mainAxisAlignment: MainAxisAlignment.end, // Align to the end
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 ElevatedButton(
                   onPressed: onSave,
@@ -67,8 +67,7 @@ class EditToDoWidget extends StatelessWidget {
                     style: TextStyle(color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Color(0xFFFF725E), // Custom color for the button
+                    backgroundColor: Color(0xFFFF725E),
                     padding: EdgeInsets.symmetric(vertical: 12, horizontal: 32),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

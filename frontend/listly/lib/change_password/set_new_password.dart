@@ -132,16 +132,15 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
             ),
             actions: [
               TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(false), // Dismiss dialog
+                onPressed: () => Navigator.of(context).pop(false),
                 child: Text("No"),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop(true); // Dismiss dialog
+                  Navigator.of(context).pop(true);
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => LoginScreen()),
-                  ); // Navigate to LoginScreen
+                  );
                 },
                 child: Text("Yes"),
               ),

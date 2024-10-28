@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart'; // Import the splash screen
+import 'splash_screen.dart';
 
 class SessionExpiredScreen extends StatelessWidget {
   @override
@@ -9,7 +9,7 @@ class SessionExpiredScreen extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return WillPopScope(
-      onWillPop: () async => false, // Disable back button functionality
+      onWillPop: () async => false,
       child: Scaffold(
         body: Center(
           child: Column(
@@ -17,18 +17,18 @@ class SessionExpiredScreen extends StatelessWidget {
             children: [
               // Display the image in the middle
               Image.asset(
-                'assets/images/error_400.png', // Ensure this asset exists
-                width: screenWidth * 0.6, // Set responsive width
-                height: screenHeight * 0.3, // Set responsive height
+                'assets/images/error_400.png',
+                width: screenWidth * 0.6,
+                height: screenHeight * 0.3,
                 fit: BoxFit.contain,
               ),
-              SizedBox(height: 30), // Space between image and text
+              SizedBox(height: 30),
 
               // Explanation text
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  'Your session has expired due to modifications made to your account. Please log in again to continue.',
+                  'Your session has expired. Please log in again to continue.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -38,11 +38,11 @@ class SessionExpiredScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: 30), // Space between text and button
+              SizedBox(height: 30),
 
               // Button to redirect to Splash screen
               SizedBox(
-                width: screenWidth * 0.8, // Responsive button width
+                width: screenWidth * 0.8,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
@@ -50,17 +50,17 @@ class SessionExpiredScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF725E), // Custom button color
-                    foregroundColor: Colors.white, // Button text color
-                    padding: EdgeInsets.symmetric(vertical: 13.0), // Padding
+                    backgroundColor: Color(0xFFFF725E),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 13.0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15), // Rounded edges
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 5, // Button shadow
+                    elevation: 5,
                   ),
                   child: Text(
                     'Log in',
-                    style: TextStyle(fontSize: 20), // Button text size
+                    style: TextStyle(fontSize: 20),
                   ),
                 ),
               ),

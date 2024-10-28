@@ -10,7 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class OTPRequestScreenInside extends ConsumerStatefulWidget {
   final String email;
 
-  OTPRequestScreenInside({required this.email}); // Constructor to accept email
+  OTPRequestScreenInside({required this.email});
 
   @override
   _OTPRequestScreenState createState() => _OTPRequestScreenState();
@@ -38,9 +38,8 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
 
   Future<void> _submitOTP() async {
     final otp = _otpControllers.map((controller) => controller.text).join();
-    print('OTP entered: $otp'); // For debugging
+    print('OTP entered: $otp');
 
-    // Show loading dialog
     showDialog(
       context: context,
       builder: (context) => LoadingDialog(message: "Verifying OTP"),
@@ -56,8 +55,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
       // Navigate to SetNewPasswordScreen upon successful verification
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => SetNewPasswordScreenInside(
-              email: widget.email), // Pass email here
+          builder: (context) => SetNewPasswordScreenInside(email: widget.email),
         ),
       );
     } catch (e) {
@@ -80,7 +78,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
 
   void _clearOTPFields() {
     for (var controller in _otpControllers) {
-      controller.clear(); // Clear the OTP input fields
+      controller.clear();
     }
   }
 
@@ -97,7 +95,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.of(context).pop(true); // Close the dialog
+              Navigator.of(context).pop(true);
               // Attempt to resend the OTP
               try {
                 await ApiService.requestOtp(widget.email);
@@ -116,8 +114,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
                         context,
                         'Request Limit Exceeded',
                         'You have reached the maximum number of OTP requests for today. Please try again tomorrow.',
-                        ref // Pass ref as the fourth argument
-                        );
+                        ref);
                   }
                 } else {
                   if (mounted) {
@@ -140,9 +137,8 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
   Future<void> _showDialog(
       BuildContext context, String title, String content, WidgetRef ref) async {
     final authService = ref.read(authServiceProvider);
-    final user = authService.currentUser; // Get the current user
-    final token = await authService.getToken(); // Get the token
-
+    final user = authService.currentUser;
+    final token = await authService.getToken();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -194,8 +190,8 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
 
   Future<bool> _onBackPressed(BuildContext context, WidgetRef ref) async {
     final authService = ref.read(authServiceProvider);
-    final user = authService.currentUser; // Get the current user
-    final token = await authService.getToken(); // Fetch token
+    final user = authService.currentUser;
+    final token = await authService.getToken();
 
     return await showDialog(
           context: context,
@@ -205,13 +201,12 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
                 "Are you sure you want to leave this session? Your OTP might expire."),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // Dismiss
+                onPressed: () => Navigator.of(context).pop(false),
                 child: Text("No"),
               ),
               TextButton(
                 onPressed: () async {
-                  final shouldLeave = await _onBackPressed(
-                      context, ref); // Show the warning dialog
+                  final shouldLeave = await _onBackPressed(context, ref);
                   if (shouldLeave) {
                     if (user != null && token != null) {
                       Navigator.of(context).pushReplacement(
@@ -219,7 +214,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
                           builder: (context) => AccountScreen(
                             username: user.username,
                             email: user.email,
-                            token: token, // Pass the non-nullable token
+                            token: token,
                           ),
                         ),
                       );
@@ -252,57 +247,51 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return WillPopScope(
-      onWillPop: () => _onBackPressed(context, ref), // Pass context and ref
+      onWillPop: () => _onBackPressed(context, ref),
       child: Scaffold(
         body: GestureDetector(
           onTap: () {
-            FocusScope.of(context)
-                .unfocus(); // Dismiss the keyboard when tapping outside
+            FocusScope.of(context).unfocus();
           },
           child: SingleChildScrollView(
             child: Center(
-              // Center the content
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    SizedBox(height: 30), // Space at the top
-                    // Encapsulated OTP input section
+                    SizedBox(height: 30),
+
                     OTPInputSection(
                       email: widget.email,
                       otpControllers: _otpControllers,
                       onChange: _checkIfAllFilled,
                     ),
-                    SizedBox(height: 20), // Space before Continue button
+                    SizedBox(height: 20),
                     // Continue button
                     SizedBox(
-                      width:
-                          screenWidth * 0.8, // Set width based on screen width
+                      width: screenWidth * 0.8,
                       child: ElevatedButton(
                         onPressed: _isButtonEnabled ? _submitOTP : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFFFF725E), // Custom color
-                          foregroundColor: Colors.white, // Text color
+                          backgroundColor: Color(0xFFFF725E),
+                          foregroundColor: Colors.white,
                           padding: EdgeInsets.symmetric(vertical: 13.0),
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(15), // Rounded edges
+                            borderRadius: BorderRadius.circular(15),
                           ),
-                          elevation: 5, // Shadow effect
+                          elevation: 5,
                         ),
                         child: Text(
                           'Continue',
-                          style:
-                              TextStyle(fontSize: 20), // Consistent text size
+                          style: TextStyle(fontSize: 20),
                         ),
                       ),
                     ),
-                    SizedBox(height: 20), // Space before back to account
+                    SizedBox(height: 20),
                     TextButton(
                       onPressed: () async {
-                        final shouldLeave = await _onBackPressed(
-                            context, ref); // Show the warning dialog
+                        final shouldLeave = await _onBackPressed(context, ref);
                         if (shouldLeave) {
                           final authService = ref.read(authServiceProvider);
                           final user = authService.currentUser;
@@ -314,7 +303,7 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
                                 builder: (context) => AccountScreen(
                                   username: user.username,
                                   email: user.email,
-                                  token: token, // Pass the non-nullable token
+                                  token: token,
                                 ),
                               ),
                             );
@@ -326,12 +315,10 @@ class _OTPRequestScreenState extends ConsumerState<OTPRequestScreenInside> {
                         }
                       },
                       child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // Center the row
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.arrow_back,
-                              color: Color(0xFFFF725E)), // Back arrow icon
-                          SizedBox(width: 5), // Space between icon and text
+                          Icon(Icons.arrow_back, color: Color(0xFFFF725E)),
+                          SizedBox(width: 5),
                           Text(
                             'Back to Account',
                             style: TextStyle(
@@ -368,23 +355,22 @@ class OTPInputSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width and height
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center, // Center align
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Image at the center
         Image.asset(
-          'assets/images/otp_request.png', // Replace with your image asset
-          width: screenWidth * 0.5, // Responsive width
-          height: screenHeight * 0.25, // Responsive height
+          'assets/images/otp_request.png',
+          width: screenWidth * 0.5,
+          height: screenHeight * 0.25,
           fit: BoxFit.fitWidth,
         ),
-        // Email confirmation text
+
         Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center align
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               'We sent you a code to',
@@ -392,32 +378,31 @@ class OTPInputSection extends StatelessWidget {
             ),
             SizedBox(height: 5),
             Text(
-              email, // Display the user's email
+              email,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        SizedBox(height: 30), // Space before OTP input
+        SizedBox(height: 30),
         // OTP input fields
         Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceEvenly, // Evenly space out the fields
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: List.generate(otpControllers.length, (index) {
             return Container(
-              width: screenWidth * 0.12, // Responsive width for each input
+              width: screenWidth * 0.12,
               child: TextField(
                 controller: otpControllers[index],
                 keyboardType: TextInputType.number,
-                textAlign: TextAlign.center, // Center the text
-                maxLength: 1, // Limit to one character
+                textAlign: TextAlign.center,
+                maxLength: 1,
                 decoration: InputDecoration(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  counterText: '', // Hide the counter text
+                  counterText: '',
                 ),
                 onChanged: (value) {
-                  onChange(); // Call the onChange callback
+                  onChange();
                   if (value.length == 1 && index < otpControllers.length - 1) {
                     // Move to the next input if current is filled
                     FocusScope.of(context).nextFocus();

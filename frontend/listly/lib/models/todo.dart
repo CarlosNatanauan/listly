@@ -1,14 +1,14 @@
 class ToDo {
-  final String id; // Unique identifier for the task
-  final String task; // Task description
-  final bool completed; // Indicates if the task is completed
-  final DateTime createdAt; // Timestamp for when the task was created
+  final String id;
+  final String task;
+  final bool completed;
+  final DateTime createdAt;
 
   ToDo({
     required this.id,
     required this.task,
     required this.completed,
-    required this.createdAt, // Add the createdAt field
+    required this.createdAt,
   });
 
   // Factory constructor to create ToDo from JSON

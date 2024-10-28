@@ -15,7 +15,7 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
     final username = prefs.getString('username');
-    final email = prefs.getString('email'); // Load email from preferences
+    final email = prefs.getString('email');
 
     if (token != null && username != null && email != null) {
       _currentUser = User(
@@ -32,11 +32,11 @@ class AuthService {
           data['token'] != null &&
           data['userId'] != null &&
           data['email'] != null) {
-        final user = User.fromJson(data); // Now the User class includes email
+        final user = User.fromJson(data);
         _currentUser = user;
         await _storeToken(user.token);
         await _storeUsername(user.username);
-        await _storeEmail(user.email); // Store email
+        await _storeEmail(user.email);
 
         // Reconnect to socket services
         final socketService = ref.read(socketServiceProvider);

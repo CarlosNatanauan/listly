@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import './auth/login_screen.dart';
-import './auth/register_screen.dart'; // Ensure the correct import for RegisterScreen
+import './auth/register_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
   @override
@@ -12,19 +12,17 @@ class OnboardingScreen extends StatelessWidget {
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16.0, vertical: 50.0), // Added padding
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 50.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Image with space on top
-              SizedBox(height: 30), // Space on top of the image
+              SizedBox(height: 30),
               Image.asset(
-                'assets/images/add_notes_image.png', // Replace with your image asset
-                width: screenWidth * 0.6, // Responsive width
+                'assets/images/add_notes_image.png',
+                width: screenWidth * 0.6,
                 fit: BoxFit.cover,
               ),
-              SizedBox(height: 10), // Space between image and text
+              SizedBox(height: 10),
               // Big Hello
               Text(
                 'Hello!',
@@ -33,8 +31,8 @@ class OnboardingScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: Colors.black54),
               ),
-              SizedBox(height: 10), // Space between texts
-              // Welcome message
+              SizedBox(height: 10),
+
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
@@ -50,7 +48,7 @@ class OnboardingScreen extends StatelessWidget {
                       text: 'Listly',
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: FontWeight.bold, // Make 'Listly' bold
+                        fontWeight: FontWeight.bold,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -65,10 +63,10 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
 
-              SizedBox(height: 40), // Space before buttons
+              SizedBox(height: 40),
               // Login button
               SizedBox(
-                width: screenWidth * 0.8, // Set width based on screen width
+                width: screenWidth * 0.8,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -76,14 +74,13 @@ class OnboardingScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF725E), // Custom color
-                    foregroundColor: Colors.white, // Text color
-                    padding: EdgeInsets.symmetric(
-                        vertical: 13.0), // Vertical padding
+                    backgroundColor: Color(0xFFFF725E),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 13.0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15), // Rounded edges
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 5, // Shadow effect
+                    elevation: 5,
                   ),
                   child: Text(
                     'Log in',
@@ -93,8 +90,8 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(height: 10), // Space between login button and OR
-              // OR text
+              SizedBox(height: 10),
+
               Text(
                 '- OR -',
                 style: TextStyle(
@@ -102,10 +99,10 @@ class OnboardingScreen extends StatelessWidget {
                   color: Colors.grey[600],
                 ),
               ),
-              SizedBox(height: 10), // Space between OR and signup button
+              SizedBox(height: 10),
               // Register button
               SizedBox(
-                width: screenWidth * 0.8, // Set width based on screen width
+                width: screenWidth * 0.8,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(
@@ -113,14 +110,13 @@ class OnboardingScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFF725E), // Custom color
-                    foregroundColor: Colors.white, // Text color
-                    padding: EdgeInsets.symmetric(
-                        vertical: 13.0), // Vertical padding
+                    backgroundColor: Color(0xFFFF725E),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 13.0),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15), // Rounded edges
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                    elevation: 5, // Shadow effect
+                    elevation: 5,
                   ),
                   child: Text(
                     'Sign Up',

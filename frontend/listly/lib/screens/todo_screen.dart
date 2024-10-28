@@ -180,7 +180,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                   value: task.completed,
                   activeColor: Color(0xFFFF725E),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(50), // Make it circular
+                    borderRadius: BorderRadius.circular(50),
                   ),
                   onChanged: (bool? newValue) async {
                     if (newValue != null) {
@@ -188,8 +188,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
                         id: task.id,
                         task: task.task,
                         completed: newValue,
-                        createdAt:
-                            task.createdAt, // Pass the existing createdAt value
+                        createdAt: task.createdAt,
                       );
                       await _updateTask(updatedTask);
                     }
@@ -274,8 +273,7 @@ class _TodoScreenState extends ConsumerState<TodoScreen> {
         id: _selectedTask!.id,
         task: editedTaskText,
         completed: _selectedTask!.completed,
-        createdAt:
-            _selectedTask!.createdAt, // Pass the existing createdAt value
+        createdAt: _selectedTask!.createdAt,
       );
       final authService = ref.read(authServiceProvider);
       final token = await authService.getToken();

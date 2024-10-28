@@ -23,7 +23,7 @@ class SettingsScreen extends ConsumerWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.of(context).pop(); // Go back to MainPage
+            Navigator.of(context).pop();
           },
         ),
         title: Text(

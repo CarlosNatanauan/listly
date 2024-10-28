@@ -14,7 +14,7 @@ class ConnectivityWrapper extends ConsumerWidget {
     final connectivityStatus = ref.watch(connectivityProvider);
 
     return Directionality(
-      textDirection: TextDirection.ltr, // Provide text direction here
+      textDirection: TextDirection.ltr,
       child: Stack(
         children: [
           child,
@@ -34,8 +34,7 @@ class NoInternetScreenOverlay extends StatelessWidget {
 
     return Positioned.fill(
       child: Material(
-        color: Colors.black
-            .withOpacity(0.5), // Dimmed background for overlay effect
+        color: Colors.black.withOpacity(0.5),
         child: Center(
           child: Container(
             padding: EdgeInsets.all(20),
@@ -50,13 +49,13 @@ class NoInternetScreenOverlay extends StatelessWidget {
                 ),
               ],
             ),
-            width: screenWidth * 0.8, // Responsive width based on screen size
+            width: screenWidth * 0.8,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Image.asset(
                   'assets/images/no_connection.png',
-                  width: screenWidth * 0.5, // Responsive image width
+                  width: screenWidth * 0.5,
                   fit: BoxFit.contain,
                 ),
                 SizedBox(height: 20),
