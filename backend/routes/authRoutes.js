@@ -126,19 +126,21 @@ module.exports = () => {
     const currentDate = new Date();
     const todayMidnight = new Date().setHours(0, 0, 0, 0);
 
+    // Check if OTP was requested today and if the count exceeds 5
     if (user.otpRequestDate && user.otpRequestDate.getTime() >= todayMidnight) {
-      if (user.otpRequestCount >= 15) {
+      if (user.otpRequestCount >= 5) {
         return res.status(429).json({ message: 'You have reached the daily OTP request limit.' });
       } else {
         user.otpRequestCount += 1;
       }
     } else {
+      // Reset OTP request count and date if it's a new day
       user.otpRequestDate = currentDate;
       user.otpRequestCount = 1;
     }
 
     const otp = crypto.randomInt(100000, 999999).toString();
-    const otpExpiration = Date.now() + 10 * 60 * 1000; // 10 minutes
+    const otpExpiration = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
 
     user.otp = otp;
     user.otpExpiration = otpExpiration;
@@ -169,13 +171,13 @@ module.exports = () => {
         </div>
       `,
     };
-    
 
     transporter.sendMail(mailOptions, (error) => {
       if (error) return res.status(500).json({ message: 'Failed to send OTP' });
       res.status(200).json({ message: 'OTP sent' });
     });
   });
+
 
   // Verify OTP
   router.post('/verify-otp', async (req, res) => {
