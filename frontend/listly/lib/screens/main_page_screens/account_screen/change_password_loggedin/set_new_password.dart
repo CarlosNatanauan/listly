@@ -25,50 +25,52 @@ class _SetNewPasswordScreenState
   String? _errorText;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isPasswordValid = false;
 
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(_validatePasswords);
+    _passwordController.addListener(() {
+      _validatePassword(_passwordController.text);
+      _validatePasswords();
+    });
     _confirmPasswordController.addListener(_validatePasswords);
+  }
+
+  void _validatePassword(String value) {
+    setState(() {
+      _isPasswordValid = value.length >= 8;
+    });
   }
 
   void _validatePasswords() {
     setState(() {
-      if (_passwordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty) {
-        if (_passwordController.text == _confirmPasswordController.text) {
-          _isButtonEnabled = true;
-          _errorText = null;
-        } else {
-          _isButtonEnabled = false;
-          _errorText = 'Passwords do not match';
-        }
+      if (_passwordController.text == _confirmPasswordController.text &&
+          _isPasswordValid) {
+        _isButtonEnabled = true;
+        _errorText = null;
       } else {
         _isButtonEnabled = false;
-        _errorText = null;
+        _errorText = _passwordController.text != _confirmPasswordController.text
+            ? 'Passwords do not match'
+            : null;
       }
     });
   }
 
   Future<void> _resetPassword() async {
     final password = _passwordController.text;
-    print("Attempting to reset password for email: ${widget.email}");
-
     showDialog(
       context: context,
       builder: (context) => LoadingDialog(message: "Changing password..."),
     );
 
     try {
-      print("Calling API with email: ${widget.email} and password: $password");
       await ApiService.changePassword(widget.email, password);
       Navigator.of(context).pop();
-      _logoutUser(); 
+      _logoutUser();
     } catch (e) {
-      Navigator.of(context).pop(); 
-      print("Error occurred: $e"); 
-
+      Navigator.of(context).pop();
       if (e
           .toString()
           .contains("You can only change your password once every 24 hours.")) {
@@ -87,13 +89,10 @@ class _SetNewPasswordScreenState
     );
 
     final authService = ref.read(authServiceProvider);
-    await authService.logout(); // Logout the current user
-
-    await Future.delayed(Duration(seconds: 5)); 
-    // Disconnect any socket connections
+    await authService.logout();
+    await Future.delayed(Duration(seconds: 5));
     ref.read(socketServiceProvider).disconnect();
     ref.read(socketServiceTasksProvider).disconnect();
-    // Close the dialog and navigate to LoginScreen
   }
 
   Future<void> _showErrorDialog(String title, String content) async {
@@ -104,9 +103,7 @@ class _SetNewPasswordScreenState
         content: Text(content),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); 
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: Text("OK"),
           ),
         ],
@@ -123,25 +120,24 @@ class _SetNewPasswordScreenState
                 "Are you sure you want to leave this session? Your progress might be lost."),
             actions: [
               TextButton(
-                onPressed: () =>
-                    Navigator.of(context).pop(false), 
+                onPressed: () => Navigator.of(context).pop(false),
                 child: Text("No"),
               ),
               TextButton(
                 onPressed: () async {
-                  Navigator.of(context).pop(true); 
+                  Navigator.of(context).pop(true);
 
                   final authService = ref.read(authServiceProvider);
                   final user = authService.currentUser;
-                  final token = await authService.getToken(); // Fetch token
+                  final token = await authService.getToken();
 
                   if (user != null && token != null) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (context) => AccountScreen(
-                          username: user.username, 
-                          email: user.email, 
-                          token: token, 
+                          username: user.username,
+                          email: user.email,
+                          token: token,
                         ),
                       ),
                     );
@@ -156,7 +152,7 @@ class _SetNewPasswordScreenState
             ],
           ),
         ) ??
-        false; 
+        false;
   }
 
   @override
@@ -171,12 +167,10 @@ class _SetNewPasswordScreenState
     final screenWidth = MediaQuery.of(context).size.width;
 
     return WillPopScope(
-      onWillPop: _onBackPressed, 
+      onWillPop: _onBackPressed,
       child: Scaffold(
         body: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).unfocus();
-          },
+          onTap: () => FocusScope.of(context).unfocus(),
           child: SingleChildScrollView(
             child: Padding(
               padding:
@@ -189,6 +183,7 @@ class _SetNewPasswordScreenState
                     passwordController: _passwordController,
                     confirmPasswordController: _confirmPasswordController,
                     errorText: _errorText,
+                    isPasswordValid: _isPasswordValid,
                     isButtonEnabled: _isButtonEnabled,
                     onPasswordChange: _validatePasswords,
                     isPasswordVisible: _isPasswordVisible,
@@ -204,6 +199,12 @@ class _SetNewPasswordScreenState
                       });
                     },
                   ),
+                  SizedBox(height: 20),
+                  if (!_isPasswordValid)
+                    Text(
+                      'Password must be at least 8 characters long',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
                   SizedBox(height: 20),
                   SizedBox(
                     width: screenWidth * 0.8,
@@ -225,16 +226,13 @@ class _SetNewPasswordScreenState
                     ),
                   ),
                   SizedBox(height: 20),
-                  // Back to Account Button
                   TextButton(
                     onPressed: () async {
-                      final shouldLeave =
-                          await _onBackPressed(); 
+                      final shouldLeave = await _onBackPressed();
                       if (shouldLeave) {
                         final authService = ref.read(authServiceProvider);
                         final user = authService.currentUser;
-                        final token =
-                            await authService.getToken(); // Fetch the token
+                        final token = await authService.getToken();
 
                         if (user != null && token != null) {
                           Navigator.of(context).pushReplacement(
@@ -242,7 +240,7 @@ class _SetNewPasswordScreenState
                               builder: (context) => AccountScreen(
                                 username: user.username,
                                 email: user.email,
-                                token: token, 
+                                token: token,
                               ),
                             ),
                           );
@@ -282,6 +280,7 @@ class PasswordInputSection extends StatelessWidget {
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final String? errorText;
+  final bool isPasswordValid;
   final bool isButtonEnabled;
   final VoidCallback onPasswordChange;
   final bool isPasswordVisible;
@@ -294,6 +293,7 @@ class PasswordInputSection extends StatelessWidget {
     required this.passwordController,
     required this.confirmPasswordController,
     required this.errorText,
+    required this.isPasswordValid,
     required this.isButtonEnabled,
     required this.onPasswordChange,
     required this.isPasswordVisible,
@@ -322,6 +322,10 @@ class PasswordInputSection extends StatelessWidget {
           obscureText: !isPasswordVisible,
           decoration: InputDecoration(
             labelText: "New Password",
+            floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF725E)),
+            ),
             suffixIcon: IconButton(
               icon: Icon(
                   isPasswordVisible ? Icons.visibility : Icons.visibility_off),
@@ -336,6 +340,10 @@ class PasswordInputSection extends StatelessWidget {
           obscureText: !isConfirmPasswordVisible,
           decoration: InputDecoration(
             labelText: "Confirm Password",
+            floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF725E)),
+            ),
             errorText: errorText,
             suffixIcon: IconButton(
               icon: Icon(isConfirmPasswordVisible

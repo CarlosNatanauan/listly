@@ -20,6 +20,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isPasswordValid = false;
   String _emailValidationMessage = '';
   String _usernameValidationMessage = '';
+  String _passwordValidationMessage = '';
 
   void _register() async {
     final username = _usernameController.text.trim();
@@ -34,7 +35,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     try {
       final response = await authService.register(username, email, password);
       if (response && mounted) {
-        // Check if the widget is still mounted
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => LoginScreen()),
         );
@@ -89,11 +89,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _validateUsername(String value) {
-    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$'); // Alphanumeric check
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9]+$');
 
     setState(() {
       if (value.length > 8) {
-        // Truncate to 8 characters if exceeded
         _usernameController.text = value.substring(0, 8);
         _usernameController.selection = TextSelection.fromPosition(
             TextPosition(offset: _usernameController.text.length));
@@ -119,8 +118,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   void _validatePassword(String value) {
     setState(() {
       if (value.length >= 8) {
+        _passwordValidationMessage = 'Password is valid';
         _isPasswordValid = true;
       } else {
+        _passwordValidationMessage =
+            'Password must be at least 8 characters long';
         _isPasswordValid = false;
       }
     });
@@ -165,15 +167,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: Colors.black54),
                 ),
                 SizedBox(height: 10),
-
-                // Username TextField with validation
                 TextField(
                   controller: _usernameController,
                   onChanged: _validateUsername,
-                  maxLength: 8, // Limit to 8 characters
+                  maxLength: 8,
                   decoration: InputDecoration(
                     labelText: 'Username',
-                    counterText: '', // Hides the max length counter
+                    floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+                    counterText: '',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
@@ -187,13 +188,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-
-                // Email TextField with validation
                 TextField(
                   controller: _emailController,
                   onChanged: _validateEmail,
                   decoration: InputDecoration(
                     labelText: 'Email',
+                    floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
@@ -207,13 +207,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-
-                // Password TextField with visibility toggle
                 TextField(
                   controller: _passwordController,
                   onChanged: _validatePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
+                    floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
@@ -222,33 +221,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.grey,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
                     contentPadding:
                         EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                   ),
-                  obscureText: !_isPasswordVisible,
+                  obscureText: true,
                 ),
-                SizedBox(height: 20),
-
-                if (_isLoading)
-                  LoadingAnimationWidget.staggeredDotsWave(
-                    color: Color(0xFFFF725E),
-                    size: 50,
-                  ),
-
-                // Register button
+                SizedBox(height: 10),
                 SizedBox(
                   width: screenWidth * 0.8,
                   child: ElevatedButton(
@@ -277,8 +255,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-
-                // Validation messages below button
                 Column(
                   children: [
                     Text(
@@ -295,6 +271,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         fontSize: 12,
                       ),
                     ),
+                    Text(
+                      _passwordValidationMessage,
+                      style: TextStyle(
+                        color: _isPasswordValid ? Colors.green : Colors.red,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (_isLoading)
+                      LoadingAnimationWidget.staggeredDotsWave(
+                        color: Color(0xFFFF725E),
+                        size: 50,
+                      ),
                   ],
                 ),
               ],

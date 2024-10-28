@@ -150,6 +150,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   onChanged: _validateEmail, // Validate email on change
                   decoration: InputDecoration(
                     labelText: 'Email',
+                    floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),

@@ -3,6 +3,11 @@ import '../services/api_service.dart';
 import '../dialogs/loading_dialog.dart';
 import '../screens/auth/login_screen.dart';
 
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../dialogs/loading_dialog.dart';
+import '../screens/auth/login_screen.dart';
+
 class SetNewPasswordScreen extends StatefulWidget {
   final String email;
 
@@ -20,51 +25,52 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   String? _errorText;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+  bool _isPasswordValid = false;
 
   @override
   void initState() {
     super.initState();
-    _passwordController.addListener(_validatePasswords);
+    _passwordController.addListener(() {
+      _validatePassword(_passwordController.text);
+      _validatePasswords();
+    });
     _confirmPasswordController.addListener(_validatePasswords);
+  }
+
+  void _validatePassword(String value) {
+    setState(() {
+      _isPasswordValid = value.length >= 8;
+    });
   }
 
   void _validatePasswords() {
     setState(() {
-      if (_passwordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty) {
-        if (_passwordController.text == _confirmPasswordController.text) {
-          _isButtonEnabled = true;
-          _errorText = null;
-        } else {
-          _isButtonEnabled = false;
-          _errorText = 'Passwords do not match';
-        }
+      if (_passwordController.text == _confirmPasswordController.text &&
+          _isPasswordValid) {
+        _isButtonEnabled = true;
+        _errorText = null;
       } else {
         _isButtonEnabled = false;
-        _errorText = null;
+        _errorText = _passwordController.text != _confirmPasswordController.text
+            ? 'Passwords do not match'
+            : null;
       }
     });
   }
 
   Future<void> _resetPassword() async {
     final password = _passwordController.text;
-    print("Attempting to reset password for email: ${widget.email}");
-
     showDialog(
       context: context,
       builder: (context) => LoadingDialog(message: "Changing password..."),
     );
 
     try {
-      print("Calling API with email: ${widget.email} and password: $password");
       await ApiService.changePassword(widget.email, password);
       Navigator.of(context).pop(); // Dismiss loading dialog
       _showSuccessDialog("Password changed successfully!");
     } catch (e) {
       Navigator.of(context).pop(); // Dismiss loading dialog
-      print("Error occurred: $e"); // Print the error for debugging
-
-      // Check if the error message matches the backend response
       if (e
           .toString()
           .contains("You can only change your password once every 24 hours.")) {
@@ -88,7 +94,6 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
               Navigator.of(context).pop(); // Close the success dialog
               Navigator.of(context).pop(); // Go back to the previous screen
 
-              // Navigate to the login screen
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => LoginScreen()),
               );
@@ -110,7 +115,6 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // Dismiss the error dialog
-              // Navigate to the login screen
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => LoginScreen()),
               );
@@ -128,8 +132,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
           builder: (context) => AlertDialog(
             title: Text("Leave Password Change?"),
             content: Text(
-              "Are you sure you want to leave this session? Your progress might be lost.",
-            ),
+                "Are you sure you want to leave this session? Your progress might be lost."),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -180,6 +183,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     passwordController: _passwordController,
                     confirmPasswordController: _confirmPasswordController,
                     errorText: _errorText,
+                    isPasswordValid: _isPasswordValid,
                     isButtonEnabled: _isButtonEnabled,
                     onPasswordChange: _validatePasswords,
                     isPasswordVisible: _isPasswordVisible,
@@ -195,6 +199,12 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       });
                     },
                   ),
+                  SizedBox(height: 20),
+                  if (!_isPasswordValid)
+                    Text(
+                      'Password must be at least 8 characters long',
+                      style: TextStyle(color: Colors.red, fontSize: 12),
+                    ),
                   SizedBox(height: 20),
                   SizedBox(
                     width: screenWidth * 0.8,
@@ -217,9 +227,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   ),
                   SizedBox(height: 20),
                   TextButton(
-                    onPressed: () {
-                      _onBackPressed(); // Call the same onBackPressed method
-                    },
+                    onPressed: _onBackPressed,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -249,6 +257,7 @@ class PasswordInputSection extends StatelessWidget {
   final TextEditingController passwordController;
   final TextEditingController confirmPasswordController;
   final String? errorText;
+  final bool isPasswordValid;
   final bool isButtonEnabled;
   final VoidCallback onPasswordChange;
   final bool isPasswordVisible;
@@ -261,6 +270,7 @@ class PasswordInputSection extends StatelessWidget {
     required this.passwordController,
     required this.confirmPasswordController,
     required this.errorText,
+    required this.isPasswordValid,
     required this.isButtonEnabled,
     required this.onPasswordChange,
     required this.isPasswordVisible,
@@ -289,6 +299,10 @@ class PasswordInputSection extends StatelessWidget {
           obscureText: !isPasswordVisible,
           decoration: InputDecoration(
             labelText: "New Password",
+            floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF725E)),
+            ),
             suffixIcon: IconButton(
               icon: Icon(
                   isPasswordVisible ? Icons.visibility : Icons.visibility_off),
@@ -303,6 +317,10 @@ class PasswordInputSection extends StatelessWidget {
           obscureText: !isConfirmPasswordVisible,
           decoration: InputDecoration(
             labelText: "Confirm Password",
+            floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Color(0xFFFF725E)),
+            ),
             errorText: errorText,
             suffixIcon: IconButton(
               icon: Icon(isConfirmPasswordVisible

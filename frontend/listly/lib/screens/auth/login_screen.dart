@@ -15,7 +15,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  bool _isPasswordVisible = false; // State to manage password visibility
+  bool _isPasswordVisible = false;
+  bool _isInvalidCredentials = false; // Flag for incorrect login attempts
 
   void _login() async {
     final username = _usernameController.text.trim();
@@ -23,9 +24,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() {
       _isLoading = true;
+      _isInvalidCredentials = false; // Reset the flag on new login attempt
     });
 
-    final authService = ref.read(authServiceProvider); // Access authService
+    final authService = ref.read(authServiceProvider);
     final user = await authService.login(username, password, ref);
 
     setState(() {
@@ -33,24 +35,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     if (user != null) {
-      ref.read(userProvider.notifier).state = user; // Update user state
+      ref.read(userProvider.notifier).state = user;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => MainPage(userName: '${user.username}!'),
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Invalid username or password'),
-      ));
+      setState(() {
+        _isInvalidCredentials = true; // Set the flag if login fails
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Get the screen width and height
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
@@ -59,32 +59,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           onPressed: () {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => OnboardingScreen()),
-            ); // Redirect to OnboardingScreen
+            );
           },
         ),
-        title: null, // Remove the title from the AppBar
       ),
       body: GestureDetector(
         onTap: () {
-          FocusScope.of(context)
-              .unfocus(); // Dismiss the keyboard when tapping outside
+          FocusScope.of(context).unfocus();
         },
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 10.0,
-            ),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Image at the top
                 Image.asset(
                   'assets/images/login_image.png',
                   width: screenWidth * 0.5,
                   fit: BoxFit.cover,
                 ),
-                SizedBox(height: 10), // Space between image and text
+                SizedBox(height: 10),
                 Text(
                   'Login',
                   style: TextStyle(
@@ -94,11 +89,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-                // Username TextField
                 TextField(
                   controller: _usernameController,
                   decoration: InputDecoration(
                     labelText: 'Username',
+                    floatingLabelStyle: TextStyle(
+                        color: Color(0xFFFF725E)), // Set floating label color
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
@@ -114,11 +110,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 SizedBox(height: 10),
-                // Password TextField with reveal password icon
                 TextField(
                   controller: _passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
+                    floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
@@ -136,8 +132,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       onPressed: () {
                         setState(() {
-                          _isPasswordVisible =
-                              !_isPasswordVisible; // Toggle password visibility
+                          _isPasswordVisible = !_isPasswordVisible;
                         });
                       },
                     ),
@@ -146,11 +141,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       horizontal: 16.0,
                     ),
                   ),
-                  obscureText: !_isPasswordVisible, // Show/hide password
+                  obscureText: !_isPasswordVisible,
                 ),
-                // Forgot Password Text Button
+                if (_isInvalidCredentials) // Show error message if login fails
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      'Username or password is incorrect',
+                      style: TextStyle(color: Colors.red, fontSize: 14),
+                    ),
+                  ),
                 Align(
-                  alignment: Alignment.centerRight, // Align to the right
+                  alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
                       Navigator.of(context).push(
@@ -174,7 +176,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     size: 50,
                   ),
                 SizedBox(height: 10),
-                // Login button
                 SizedBox(
                   width: screenWidth * 0.8,
                   child: ElevatedButton(
@@ -182,13 +183,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFFFF725E),
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                        vertical: 13.0,
-                      ), // Same vertical padding
+                      padding: EdgeInsets.symmetric(vertical: 13.0),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      elevation: 5, // Shadow effect
+                      elevation: 5,
                     ),
                     child: Text(
                       'Login',

@@ -61,21 +61,8 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
   }
 
   Future<void> _initController() async {
-    try {
-      final result = await rootBundle.loadString('assets/welcome.json');
-      final heuristics = ParchmentHeuristics(
-        formatRules: [],
-        insertRules: [],
-        deleteRules: [],
-      ).merge(ParchmentHeuristics.fallback);
-      final doc = ParchmentDocument.fromJson(
-          jsonDecode(result) as List<dynamic>,
-          heuristics: heuristics);
-      _controller = FleatherController(document: doc);
-    } catch (err, st) {
-      print('Cannot read welcome.json: $err\n$st');
-      _controller = FleatherController();
-    }
+    _controller = FleatherController(
+        document: ParchmentDocument()); // Use named parameter for document
     setState(() {});
   }
 
