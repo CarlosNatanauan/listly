@@ -151,7 +151,7 @@ module.exports = () => {
       subject: 'Your Password Reset OTP - Action Required',
       html: `
         <div style="font-family: Arial, sans-serif; color: #333;">
-          <h2 style="color: #FF725E;">Hello, ${user.username},</h2>
+          <h2>Hello, <span style="color: #FF725E;">${user.username}</span>,</h2>
           <p>We received a request to reset the password associated with this email address. If you made this request, please use the One-Time Password (OTP) below to proceed:</p>
           
           <div style="font-size: 1.5em; font-weight: bold; color: #FF725E; margin: 20px 0;">
