@@ -118,7 +118,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   // Start token validation timer
   void _startTokenValidationTimer() {
     _tokenValidationTimer =
-        Timer.periodic(Duration(seconds: 20), (timer) async {
+        Timer.periodic(Duration(seconds: 10), (timer) async {
       final connectivityStatus = ref.read(connectivityProvider).value;
       if (connectivityStatus != ConnectivityResult.none && _token != null) {
         final authService = ref.read(authServiceProvider);
