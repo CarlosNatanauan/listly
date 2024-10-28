@@ -148,9 +148,28 @@ module.exports = () => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
-      subject: 'Password Reset OTP',
-      text: `Your OTP is: ${otp}. It will expire in 10 minutes.`
+      subject: 'Your Password Reset OTP - Action Required',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h2 style="color: #FF725E;">Hello, ${user.username},</h2>
+          <p>We received a request to reset the password associated with this email address. If you made this request, please use the One-Time Password (OTP) below to proceed:</p>
+          
+          <div style="font-size: 1.5em; font-weight: bold; color: #FF725E; margin: 20px 0;">
+            ${otp}
+          </div>
+          
+          <p style="margin-bottom: 20px;">This OTP is valid for <strong>10 minutes</strong>. For security, please do not share this code with anyone.</p>
+          
+          <p>If you did not request a password reset, please ignore this email. Your account remains secure.</p>
+          
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+          
+          <p>Best regards,<br>
+          <strong>Your Application Support Team</strong></p>
+        </div>
+      `,
     };
+    
 
     transporter.sendMail(mailOptions, (error) => {
       if (error) return res.status(500).json({ message: 'Failed to send OTP' });
