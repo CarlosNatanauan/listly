@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const http = require('http');
 const { Server } = require('socket.io');
+const https = require('https'); // Add https module for pinging
 
 const app = express();
 const server = http.createServer(app);
@@ -52,6 +53,20 @@ app.use('/feedback', feedbackRoutes);
 app.get('/', (req, res) => {
   res.send('Notepad-ToDo API is running');
 });
+
+// Ping route to keep the app active
+app.get('/ping', (req, res) => {
+  res.status(200).send('pong');
+});
+
+// Self-ping function to prevent app from sleeping
+setInterval(() => {
+    https.get('https://listly-ocau.onrender.com/ping', (res) => {
+        console.log(`Ping response: ${res.statusCode}`);
+    }).on('error', (err) => {
+        console.error('Error pinging:', err.message);
+    });
+}, 5 * 60 * 1000); // Ping every 5 minutes
 
 // Start the server
 server.listen(PORT, () => {
