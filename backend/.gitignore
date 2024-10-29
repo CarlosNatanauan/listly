@@ -1,0 +1,9 @@
+# Node.js-specific
+node_modules/
+.env
+*.log
+
+# Specific backend files to ignore
+index.js
+routes/authRoutes.js
+middleware/authMiddleware.js
