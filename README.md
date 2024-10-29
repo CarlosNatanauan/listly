@@ -11,10 +11,10 @@
 ---
 
 ## ✨ Key Features
-- **User Management**: Easy account setup with register, login, and account deletion options.
-- **Real-Time Sync**: Keep all your devices updated instantly.
-- **To-Do List**: Manage tasks effortlessly with a streamlined to-do layout.
-- **Rich Text Notes**: Customize your notes with bold, italics, colors, bullets, and more.
+- **User Management**: Create, access, and manage your account easily.
+- **Real-Time Sync**: Updates across devices in real time.
+- **To-Do List**: Organize tasks with a clean, intuitive interface.
+- **Rich Text Notes**: Format your notes to suit your needs.
 
 ## 🛠 Built With
 - **Frontend**: Flutter with Riverpod
