@@ -319,6 +319,7 @@ class PasswordInputSection extends StatelessWidget {
         SizedBox(height: 20),
         TextField(
           controller: passwordController,
+          cursorColor: Color(0xFFFF725E),
           obscureText: !isPasswordVisible,
           decoration: InputDecoration(
             labelText: "New Password",
@@ -337,6 +338,7 @@ class PasswordInputSection extends StatelessWidget {
         SizedBox(height: 10),
         TextField(
           controller: confirmPasswordController,
+          cursorColor: Color(0xFFFF725E),
           obscureText: !isConfirmPasswordVisible,
           decoration: InputDecoration(
             labelText: "Confirm Password",

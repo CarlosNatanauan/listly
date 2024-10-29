@@ -142,6 +142,7 @@ class _ForgotPasswordScreenState
                 // Email TextField
                 TextField(
                   controller: _emailController,
+                  cursorColor: Color(0xFFFF725E),
                   enabled: false,
                   decoration: InputDecoration(
                     labelText: 'Email',

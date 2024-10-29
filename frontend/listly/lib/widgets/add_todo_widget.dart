@@ -39,7 +39,10 @@ class AddToDoWidget extends StatelessWidget {
               children: [
                 Text(
                   'New To-do',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54),
                 ),
                 IconButton(
                   icon: Icon(Icons.close),
@@ -49,11 +52,20 @@ class AddToDoWidget extends StatelessWidget {
             ),
             TextField(
               controller: textController,
+              cursorColor: Color(0xFFFF725E),
               decoration: InputDecoration(
                 hintText: 'Add a to-do item',
-                border: OutlineInputBorder(),
+                floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFFFF725E)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFFFF725E)),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               ),
-              autofocus: true, // Automatically shows the keyboard
+              autofocus: true,
             ),
             SizedBox(height: 16),
             Row(

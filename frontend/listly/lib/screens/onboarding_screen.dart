@@ -119,7 +119,7 @@ class OnboardingScreen extends StatelessWidget {
                     elevation: 5,
                   ),
                   child: Text(
-                    'Sign Up',
+                    'Register',
                     style: TextStyle(
                       fontSize: 20,
                     ),

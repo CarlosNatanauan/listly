@@ -228,7 +228,7 @@ class _AddNoteWidgetContentState extends State<_AddNoteWidgetContent> {
             icon: Icon(Icons.delete),
             onPressed: isEditing ? _confirmDeleteNote : null,
             tooltip: 'Delete Note',
-            color: isEditing ? Color.fromARGB(255, 165, 46, 31) : Colors.grey,
+            color: isEditing ? Color(0xFFFF725E) : Colors.grey,
           ),
         ],
       ),

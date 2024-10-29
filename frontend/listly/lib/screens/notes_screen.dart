@@ -189,7 +189,7 @@ class _NotesScreenState extends ConsumerState<NotesScreen> {
 
   // Format Date and Time for the card display
   String _formatDateTime(DateTime dateTime) {
-    final formatter = DateFormat('yyyy-MM-dd HH:mm:ss');
+    final formatter = DateFormat('MMM d, yyyy'); // Format as "Oct 29, 2024"
     return formatter.format(dateTime);
   }
 

@@ -140,6 +140,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         SizedBox(height: 8),
                         TextField(
                           controller: _commentsController,
+                          cursorColor: Color(0xFFFF725E),
                           maxLines: 5,
                           onChanged: (text) {
                             additionalComments = text;

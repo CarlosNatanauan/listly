@@ -1,6 +1,6 @@
 {
-    "name": "listly",
-    "short_name": "listly",
+    "name": "Listly",
+    "short_name": "Listly",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

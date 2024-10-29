@@ -147,6 +147,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 // Email TextField
                 TextField(
                   controller: _emailController,
+                  cursorColor: Color(0xFFFF725E),
                   onChanged: _validateEmail, // Validate email on change
                   decoration: InputDecoration(
                     labelText: 'Email',

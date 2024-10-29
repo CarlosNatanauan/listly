@@ -376,6 +376,7 @@ class OTPInputSection extends StatelessWidget {
               width: screenWidth * 0.12, // Responsive width for each input
               child: TextField(
                 controller: otpControllers[index],
+                cursorColor: Color(0xFFFF725E),
                 keyboardType: TextInputType.number,
                 textAlign: TextAlign.center, // Center the text
                 maxLength: 1, // Limit to one character

@@ -169,6 +169,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(height: 10),
                 TextField(
                   controller: _usernameController,
+                  cursorColor: Color(0xFFFF725E),
                   onChanged: _validateUsername,
                   maxLength: 8,
                   decoration: InputDecoration(
@@ -190,6 +191,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(height: 10),
                 TextField(
                   controller: _emailController,
+                  cursorColor: Color(0xFFFF725E),
                   onChanged: _validateEmail,
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -209,6 +211,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 SizedBox(height: 10),
                 TextField(
                   controller: _passwordController,
+                  cursorColor: Color(0xFFFF725E),
                   onChanged: _validatePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
@@ -221,10 +224,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(color: Color(0xFFFF725E)),
                     ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                        color: Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                     contentPadding:
                         EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
                   ),
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                 ),
                 SizedBox(height: 10),
                 SizedBox(

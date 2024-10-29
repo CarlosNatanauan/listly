@@ -91,6 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SizedBox(height: 10),
                 TextField(
                   controller: _usernameController,
+                  cursorColor: Color(0xFFFF725E),
                   decoration: InputDecoration(
                     labelText: 'Username',
                     floatingLabelStyle: TextStyle(
@@ -112,6 +113,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 SizedBox(height: 10),
                 TextField(
                   controller: _passwordController,
+                  cursorColor: Color(0xFFFF725E),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     floatingLabelStyle: TextStyle(color: Color(0xFFFF725E)),
