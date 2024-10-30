@@ -4,7 +4,7 @@
 ![listly_screens](https://github.com/user-attachments/assets/fee81ac7-2a53-4d7d-9f75-ddf73665516c)
 
 ## 📸 All Page Screenhots
-[**Screenshots** of Pages](https://drive.google.com/drive/folders/1KBqQT2OMRuSfHE9zimYOu3ukQfs0q_3e)
+[**Click** to see all screenshot of pages](https://drive.google.com/drive/folders/1KBqQT2OMRuSfHE9zimYOu3ukQfs0q_3e)
 
 ## 🎥 Demo Video
 [![Watch the demo](https://img.youtube.com/vi/izoIeaZ9dRQ/hqdefault.jpg)](https://www.youtube.com/watch?v=izoIeaZ9dRQ)
